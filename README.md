@@ -104,7 +104,12 @@ chmod +x bulldozer
 - bulldozer: Main script
 - classes/: Contains various classes used in the project.
   - apis/: Contains classes to interact with various apis.
+    - podcastindex.py: Interacts with the Podcastindex API
     - podchaser.py: Interacts with the Podchaser API
+  - scrapers/: Contains classes to scrape websites.
+    - podnews.py: Scrapes data from Podnews.
+  - cache.py: Handles the caching.
+  - data_formatter.py: Methods for transforming data.
   - dupe_checker.py: Checks for duplicates.
   - file_analyzer.py: Analyzes downloaded files.
   - file_organizer.py: Organizes downloaded files.
