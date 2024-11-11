@@ -12,7 +12,7 @@ from classes.report import Report
 
 config = load_config()
 
-def main(input, censor_rss, report_only=False, search_term=None):
+def main(input, censor_rss, report_only=False, search_term=None, download_only=False):
     """
     Main function to run the bulldozer script
 
@@ -37,6 +37,9 @@ def main(input, censor_rss, report_only=False, search_term=None):
         name = podcast.name
         folder_path = temp_dir
 
+    if download_only:
+        announce(f"Podcast downloaded!", "celebrate")
+        return
     podcast.analyze_files()
     if not report_only:
         podcast.organize_files()
@@ -131,6 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("input", nargs="?", help="RSS feed URL, directory path, local RSS file path, or name to dupecheck")
     parser.add_argument("--censor-rss", action="store_true", help="Make sure the RSS feed is censored")
     parser.add_argument("--report-only", action="store_true", help="Generates a report only")
+    parser.add_argument("--download-only", action="store_true", help="Only download the files")
     parser.add_argument("--check-files", action="store_true", help="Only check the files")
     parser.add_argument("--dupecheck", action="store_true", help="Perform a dupecheck")
     parser.add_argument("--make-torrent", action="store_true", help="Only make a torrent file")
@@ -156,4 +160,4 @@ if __name__ == "__main__":
     elif args.check_config:
         check_config()
     else:
-        main(args.input, args.censor_rss, args.report_only, args.search_term)
+        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only)
