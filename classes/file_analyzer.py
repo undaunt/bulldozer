@@ -148,9 +148,11 @@ class FileAnalyzer:
         for bitrate_list in self.bitrates.values():
             if file_path in bitrate_list:
                 bitrate_list.remove(file_path)
+                log(f"Removed bitrate path: {file_path}", "debug")
         for format_list in self.file_formats.values():
             if file_path in format_list:
                 format_list.remove(file_path)
+                log(f"Removed format list path: {file_path}", "debug")
 
     def update_file_path(self, old_path, new_path):
         """
@@ -163,7 +165,9 @@ class FileAnalyzer:
             if old_path in bitrate_list:
                 bitrate_list.remove(old_path)
                 bitrate_list.append(new_path)
+                log(f"Updated bitrate path: {old_path} -> {new_path}", "debuug")
         for format_list in self.file_formats.values():
             if old_path in format_list:
                 format_list.remove(old_path)
                 format_list.append(new_path)
+                log(f"Updated format list path: {old_path} -> {new_path}", "debuug")
