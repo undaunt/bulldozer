@@ -102,6 +102,9 @@ class Report:
                 "overall_bitrate": overall_bitrate,
                 "number_of_files": total_files,
                 "completed": self.podcast.completed,
+                "average_duration": self.podcast.analyzer.get_average_duration(),
+                "longest_duration": self.podcast.analyzer.get_longest_duration(),
+                "shortest_duration": self.podcast.analyzer.get_shortest_duration(),
             }
             name = template.get_name(dynamic_data)
             if name:
