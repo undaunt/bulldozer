@@ -101,6 +101,7 @@ class Report:
                 "file_format": file_format,
                 "overall_bitrate": overall_bitrate,
                 "number_of_files": total_files,
+                "completed": self.podcast.completed,
             }
             name = template.get_name(dynamic_data)
             if name:

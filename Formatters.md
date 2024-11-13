@@ -27,3 +27,11 @@ Available settings
 
 Available conditions:
 - **regex**: Use regex to check the if **condition_value** is true or false
+
+### Replacer
+**method**: replacer
+
+Available settings
+- **replacements**: A collection of pattern replacements to perform, should consist of:
+  - **pattern**: What to look for (e.g., '(?<=\.)(?! )').
+  - **replacement**: What to replace it with (e.g., '\n').
