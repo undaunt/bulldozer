@@ -27,7 +27,9 @@ class FileOrganizer:
         ep_nr_at_end_file_pattern = re.compile(self.config.get('ep_nr_at_end_file_pattern', r'^(.* - )(\d{4}-\d{2}-\d{2}) (.*?)( - )((Ep\.?|Episode|E)?\s*(\d+))(\.\w+)$'))
         for file_path in Path(self.podcast.folder_path).rglob('*'):
             if file_path.is_file():
-                self.rename_file(file_path, ep_nr_at_end_file_pattern)
+                new_file_path = self.rename_file(file_path, ep_nr_at_end_file_pattern)
+                if new_file_path != file_path:
+                    self.podcast.analyzer.update_file_path(file_path, new_file_path)
 
     def get_new_name(self, name, file_path):
         """
@@ -77,7 +79,7 @@ class FileOrganizer:
         file_path.rename(new_path)
         file_path = new_path
 
-        self.fix_episode_numbering(file_path, ep_nr_at_end_file_pattern)
+        return self.fix_episode_numbering(file_path, ep_nr_at_end_file_pattern)
 
     def find_unwanted_files(self):
         """
@@ -88,6 +90,7 @@ class FileOrganizer:
             if file_path.is_file() and any(unwanted_file.lower() in file_path.name.lower() for unwanted_file in self.unwanted_files):
                 if ask_yes_no(f"Would you like to remove '{file_path.name}'"):
                     file_path.unlink()
+                    self.podcast.analyzer.remove_file(file_path)
 
     def pad_episode_numbers(self):
         """
@@ -177,23 +180,25 @@ class FileOrganizer:
             max_episode_number = len(episode_titles)
             num_digits = len(str(max_episode_number))
 
-            for index, file in enumerate(files):
-                normalized_filename = normalize_string(file.name)
+            for index, file_path in enumerate(files):
+                normalized_filename = normalize_string(file_path.name)
                 for episode_number, title in enumerate(episode_titles, start=1):
                     if has_trailer:
                         episode_number -= 1
                     normalized_title = normalize_string(title)
                     if normalized_title in normalized_filename:
+                        old_path = file_path
                         padded_episode = str(episode_number).zfill(num_digits)
 
-                        original_title = re.sub(rf'\b{date}\b ', '', file.name).strip()
+                        original_title = re.sub(rf'\b{date}\b ', '', file_path.name).strip()
                         title_parts = re.split(self.config.get('title_split_pattern', r' - (?=[^-]*$)'), original_title)
                         
                         new_filename = filename_format.format(prefix=title_parts[0].strip(), date=date, episode=padded_episode, suffix=title_parts[1].strip())
-                        new_path = file.with_name(new_filename)
+                        new_path = file_path.with_name(new_filename)
 
-                        file.rename(new_path)
-                        log(f"Renamed '{file}' to '{new_path}'", "debug")
+                        file_path.rename(new_path)
+                        log(f"Renamed '{file_path}' to '{new_path}'", "debug")
+                        self.podcast.analyzer.update_file_path(old_path, new_path)
                         break
 
     def check_numbering(self):

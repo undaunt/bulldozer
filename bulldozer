@@ -43,8 +43,6 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     podcast.analyze_files()
     if not report_only:
         podcast.organize_files()
-        # This is hacky, but since files are renamed, and possibly removed, we need to rerun this
-        podcast.analyze_files()
     podcast.metadata.load(search_term)
     if not podcast.metadata.has_data:
         announce(f"Failed to load metadata for {name}, skipping report generation", "warning")

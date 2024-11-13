@@ -138,3 +138,32 @@ class FileAnalyzer:
         if not durations:
             return None
         return min(durations)
+    
+    def remove_file(self, file_path):
+        """
+        Remove a file from bitrates and file formats.
+        
+        :param file_path: The path to the file to remove.
+        """
+        for bitrate_list in self.bitrates.values():
+            if file_path in bitrate_list:
+                bitrate_list.remove(file_path)
+        for format_list in self.file_formats.values():
+            if file_path in format_list:
+                format_list.remove(file_path)
+
+    def update_file_path(self, old_path, new_path):
+        """
+        Update the file path in bitrates and file formats.
+        
+        :param old_path: The old path to the file.
+        :param new_path: The new path to the file.
+        """
+        for bitrate_list in self.bitrates.values():
+            if old_path in bitrate_list:
+                bitrate_list.remove(old_path)
+                bitrate_list.append(new_path)
+        for format_list in self.file_formats.values():
+            if old_path in format_list:
+                format_list.remove(old_path)
+                format_list.append(new_path)
