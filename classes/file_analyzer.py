@@ -27,11 +27,13 @@ class FileAnalyzer:
         self.bitrates = defaultdict(list)
         self.file_formats = defaultdict(list)
         self.all_vbr = True
+        self.durations = defaultdict(list)
         all_bad = True
+        trailer_patterns = self.config.get('trailer_patterns', [])
         with spinner("Checking files") as spin:
             for file_path in self.podcast.folder_path.iterdir():
                 if file_path.suffix.lower() in ['.mp3', '.m4a']:
-                    metadata = self.analyze_audio_file(file_path)
+                    metadata = self.analyze_audio_file(file_path, trailer_patterns)
                     if metadata:
                         all_bad = False
                         self.process_metadata(metadata, file_path)
@@ -41,7 +43,7 @@ class FileAnalyzer:
                 return
             spin.ok("✔")
 
-    def analyze_audio_file(self, file_path):
+    def analyze_audio_file(self, file_path, trailer_patterns):
         """
         Analyze an individual audio file and extract metadata.
         
@@ -52,6 +54,11 @@ class FileAnalyzer:
         if not audiofile or not hasattr(audiofile, 'info'):
             log(f"Unsupported or corrupt file, skipping: {file_path}", "warning")
             return None
+
+        if not any(pattern.lower() in file_path.lower() for pattern in trailer_patterns):
+            if isinstance(audiofile, MP3) or isinstance(audiofile, MP4):
+                if audiofile.info.length:
+                    self.durations[audiofile.info.length].append(file_path)
 
         metadata = {}
         if isinstance(audiofile, MP3):
@@ -98,3 +105,36 @@ class FileAnalyzer:
 
         file_format = file_path.suffix.lower()[1:]
         self.file_formats[file_format].append(file_path)
+
+    def get_average_duration(self):
+        """
+        Get the average duration of the audio files.
+        
+        :return: The average duration in seconds.
+        """
+        durations = list(self.durations.keys())
+        if not durations:
+            return None
+        return sum(durations) / len(durations)
+    
+    def get_longest_duration(self):
+        """
+        Get the longest duration of the audio files.
+        
+        :return: The longest duration in seconds.
+        """
+        durations = list(self.durations.keys())
+        if not durations:
+            return None
+        return max(durations)
+    
+    def get_shortest_duration(self):
+        """
+        Get the shortest duration of the audio files.
+        
+        :return: The shortest duration in seconds.
+        """
+        durations = list(self.durations.keys())
+        if not durations:
+            return None
+        return min(durations)
