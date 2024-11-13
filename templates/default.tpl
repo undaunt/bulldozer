@@ -52,10 +52,10 @@ Tags: {{ tags }}
 
 {%- if podnews and podnews.appleRating %}
 
-Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes){%- endif %}
+Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %}){%- endif %}
 {%- if podchaser.ratingAverage %}{%- if podnews and podnews.appleRating %} -- {%- else %}
 
-{% endif %} Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} votes){%- endif %}
+{% endif %} Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 }s{%- endif %}){%- endif %}
 {%- elif podcastindex %}
 {%- if podcastindex.author %}
 [b][size=10]{{ podcastindex.author_article | upper }}[/size] [size=14]{{ podcastindex.author | upper }}[/size] [size=10]PRODUCTION[/size][/b]
@@ -74,7 +74,7 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingC
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
 {% if last_episode_included %}Last Episode Included: [b]{{ last_episode_included }}[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
-{%- if last_episode_included %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes)
+{%- if last_episode_included %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
 {%- endif %}
 {%- else %}
 [size=30][b]{{ name_clean }}[/b][/size]
@@ -85,7 +85,7 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingC
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
 {% if last_episode_included %}Last Episode Included: [b]{{ last_episode_included }}[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
-{%- if last_episode_included %} -- {%- endif %} Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes)
+{%- if last_episode_included %} -- {%- endif %} Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
 {%- endif %}
 {%- endif %}
 
