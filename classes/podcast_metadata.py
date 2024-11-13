@@ -268,7 +268,6 @@ class PodcastMetadata:
             return
 
         archive_folder = self.config.get('archive_metadata_directory', None)
-        log(f"Archiving meta {file_path.name}", "debug")
         archive_metadata(file_path, archive_folder)
         log(f"Deleting meta {file_path.name}", "debug")
         file_path.unlink()
