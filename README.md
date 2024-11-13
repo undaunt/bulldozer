@@ -62,7 +62,7 @@ Upgrading should be fairly simple, but if you're jumping versions it might get m
 
 2. Make sure requirements are up-to-date
     ```sh
-     pip install -r requirements.txt
+     pip install -r requirements.txt --upgrade
     ```
 
 3. Run the config checker to see if your config is outdated
