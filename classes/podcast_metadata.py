@@ -2,6 +2,7 @@
 import json
 import re
 from .utils import log, archive_metadata, open_file_case_insensitive, find_case_insensitive_files
+from .utils import copy_file
 from .data_formatter import DataFormatter
 from .apis.podchaser import Podchaser
 from .apis.podcastindex import Podcastindex
@@ -271,3 +272,19 @@ class PodcastMetadata:
         archive_metadata(file_path, archive_folder)
         log(f"Deleting meta {file_path.name}", "debug")
         file_path.unlink()
+
+    def duplicate(self, new_folder):
+        """
+        Duplicate the metadata file to a new folder.
+
+        :param new_folder: The folder to duplicate the metadata file to.
+        """
+        file_path = self.get_file_path()
+        
+        if not file_path:
+            log(f"Metadata file {file_path} does not exist - can't duplicate.", "debug")
+            return
+        
+        new_file_path = new_folder / file_path.name
+        copy_file(file_path, new_file_path)
+        log(f"Duplicated meta {file_path.name} to {new_file_path}", "debug")

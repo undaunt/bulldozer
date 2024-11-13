@@ -2,6 +2,7 @@
 import pillow_avif
 from PIL import Image
 from .utils import spinner, get_metadata_directory, log, archive_metadata, find_case_insensitive_files
+from .utils import copy_file
 
 class PodcastImage:
     def __init__(self, podcast, config):
@@ -118,3 +119,19 @@ class PodcastImage:
                 spin.ok("✔")
                 
         return True
+    
+    def duplicate(self, new_folder):
+        """
+        Duplicate the image file to a new folder.
+
+        :param new_folder: The folder to duplicate the image file to.
+        """
+        file_path = self.get_file_path()
+        
+        if not file_path:
+            log(f"Image {file_path} does not exist - can't duplicate.", "debug")
+            return
+        
+        new_file_path = new_folder / file_path.name
+        copy_file(file_path, new_file_path)
+        log(f"Duplicating image {file_path.name} to {new_file_path}", "debug")
