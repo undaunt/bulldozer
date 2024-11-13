@@ -9,7 +9,7 @@ from .podcast_metadata import PodcastMetadata
 from .utils import log, run_command, announce, spinner, get_metadata_directory
 
 class Podcast:
-    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True):
+    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None):
         """
         Initialize the Podcast with the name, folder path, configuration, and source RSS file.
 
@@ -19,6 +19,7 @@ class Podcast:
         :param source_rss_file: The source RSS file to download.
         :param censor_rss: If True, the RSS feed will be censored.
         :param check_duplicates: If True, check for duplicate episodes.
+        :param search_term: The search term used to find the podcast.
 
         The Podcast class is responsible for handling the podcast.
         """
@@ -31,6 +32,7 @@ class Podcast:
         self.downloaded = False
         if self.name != 'unknown podcast':
             self.downloaded = True
+        self.search_term = search_term
         self.rss = Rss(self, source_rss_file, self.config, censor_rss)
         self.image = PodcastImage(self, self.config)
         self.metadata = PodcastMetadata(self, self.config)
@@ -89,10 +91,13 @@ class Podcast:
         :return: True if there are no duplicates, False otherwise.
         """
         if self.config.get('api_key') and self.config.get('dupecheck_url'):
-            dupe_checker = DupeChecker(self.name, self.config.get('dupecheck_url'), self.config.get('api_key'))
+            term = self.search_term if self.search_term else self.name
+            dupe_checker = DupeChecker(term, self.config.get('dupecheck_url'), self.config.get('api_key'))
             progress = dupe_checker.check_duplicates()
             if not progress:
                 self.cleanup_and_exit()
+        else:
+            log("Skipping duplicate check because 'api_key' or 'dupecheck_url' is not set in the config.", "debug")
 
     def archive_files(self):
         """

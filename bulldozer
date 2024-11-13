@@ -20,19 +20,19 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     :param censor_rss: Whether to censor the RSS feed or not
     """
     global config
-    print("· • —– ++ ---| Bulldozer v0.5.9 |--- ++ —– • ·")
+    print("· • —– ++ ---| Bulldozer v0.6.0 |--- ++ —– • ·")
 
     if os.path.isdir(input):
         folder_path = Path(input)
         name = folder_path.name
         check_duplicates = not report_only
-        podcast = Podcast(name, folder_path, config=config, censor_rss=censor_rss, check_duplicates=check_duplicates)
+        podcast = Podcast(name, folder_path, config, censor_rss=censor_rss, check_duplicates=check_duplicates, search_term=search_term)
     else:
         source_rss_file = input
         output_dir = config.get("output_dir", ".")
         temp_dir = Path(output_dir) / 'download_temp'
         temp_dir.mkdir(parents=True, exist_ok=True)
-        podcast = Podcast("unknown podcast", temp_dir, source_rss_file=source_rss_file, config=config, censor_rss=censor_rss)
+        podcast = Podcast("unknown podcast", temp_dir, config, source_rss_file, censor_rss, True, search_term)
         podcast.download_episodes()
         name = podcast.name
         folder_path = temp_dir
