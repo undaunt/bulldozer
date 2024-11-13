@@ -446,3 +446,12 @@ def perform_replacements(string, file_replacements):
                 string = re.sub(pattern, replacement, string)
 
     return string
+
+def copy_file(source, target):
+    """
+    Copy a file from the source to the target.
+
+    :param source: The source file path.
+    :param target: The target file path.
+    """
+    shutil.copy(source, target)
