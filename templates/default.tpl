@@ -52,10 +52,10 @@ Tags: {{ tags }}
 
 {%- if podnews and podnews.appleRating %}
 
-Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %}){%- endif %}
-{%- if podchaser.ratingAverage %}{%- if podnews and podnews.appleRating %} -- {%- else %}
-
-{% endif %} Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 }s{%- endif %}){%- endif %}
+Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRatingCount }} votes{%- endif %})
+{%- if podchaser.ratingAverage %}-- Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 %}s{%- endif %})
+{%- endif %}
+{%- endif %}
 {%- elif podcastindex %}
 {%- if podcastindex.author %}
 [b][size=10]{{ podcastindex.author_article | upper }}[/size] [size=14]{{ podcastindex.author | upper }}[/size] [size=10]PRODUCTION[/size][/b]
