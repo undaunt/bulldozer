@@ -8,3 +8,4 @@ pillow
 pillow-avif-plugin
 jinja2
 beautifulsoup4
+tinydb
