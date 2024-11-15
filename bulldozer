@@ -7,12 +7,12 @@ from pathlib import Path
 from classes.dupe_checker import DupeChecker
 from classes.podcast import Podcast
 from classes.torrent_creator import TorrentCreator
-from classes.utils import load_config, setup_logging, announce, ask_yes_no, check_config
+from classes.utils import load_config, setup_logging, announce, ask_yes_no, check_config, log
 from classes.report import Report
 
 config = load_config()
 
-def main(input, censor_rss, report_only=False, search_term=None, download_only=False):
+def main(input, censor_rss, report_only=False, search_term=None, download_only=False, refresh=False):
     """
     Main function to run the bulldozer script
 
@@ -43,11 +43,30 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     podcast.analyze_files()
     if not report_only:
         podcast.organize_files()
-    podcast.metadata.load(search_term)
-    if not podcast.metadata.has_data:
+    
+    database_active = config.get("database", {}).get("active", True)
+
+    if not refresh and database_active:
+        podcast.load_from_database()
+    
+    report  = Report(podcast, config)
+    report_exists = report.check_if_report_exists()
+    generate_report = True
+    if report_exists:
+        report_filename = report.get_file_path()
+        if not ask_yes_no(f"Report {report_filename} already exists. Overwrite?"):
+            log(f"Report {report_filename} already exists. Skipping report generation.", "debug")
+            generate_report = False
+        else:
+            log(f"Overwriting report {report_filename}", "debug")
+
+    if not podcast.metadata.has_data and generate_report:
+        podcast.metadata.load(search_term)
+    if not podcast.metadata.has_data and generate_report:
         announce(f"Failed to load metadata for {name}, skipping report generation", "warning")
-    else:
-        report  = Report(podcast, config)
+    elif generate_report:
+        if database_active:
+            podcast.add_to_database(refresh)
         report.generate()
     if report_only:
         return
@@ -133,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--censor-rss", action="store_true", help="Make sure the RSS feed is censored")
     parser.add_argument("--report-only", action="store_true", help="Generates a report only")
     parser.add_argument("--download-only", action="store_true", help="Only download the files")
+    parser.add_argument("--refresh", action="store_true", help="Don't read data from the database")
     parser.add_argument("--check-files", action="store_true", help="Only check the files")
     parser.add_argument("--dupecheck", action="store_true", help="Perform a dupecheck")
     parser.add_argument("--make-torrent", action="store_true", help="Only make a torrent file")
@@ -158,4 +178,4 @@ if __name__ == "__main__":
     elif args.check_config:
         check_config()
     else:
-        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only)
+        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only, args.refresh)
