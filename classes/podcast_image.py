@@ -108,8 +108,11 @@ class PodcastImage:
         if file_path.exists():
             with spinner(f"Moving image {file_path.name}") as spin:
                 try:
-                    file_path.rename(self.get_meta_file_path())
-                    log(f"Moved image to {self.get_meta_file_path()}", "debug")
+                    new_path = self.get_meta_file_path()
+                    if not new_path.parent.exists():
+                        new_path.parent.mkdir(parents=True)
+                    file_path.rename(new_path)
+                    log(f"Moved image to {new_path}", "debug")
                     self.moved = True
                 except Exception as e:
                     log("Failed to move image", "error")
