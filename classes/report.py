@@ -27,7 +27,7 @@ class Report:
         base_dir = self.config.get('base_dir', None)
         if not base_dir:
             base_dir = self.podcast.folder_path.parent
-        file_name = f'{self.podcast.name}.files.txt' if check_files_only else f'{self.podcast.name}.txt'
+        file_name = f'{self.podcast.folder_path.name}.files.txt' if check_files_only else f'{self.podcast.folder_path.name}.txt'
         return Path(base_dir) / file_name
     
     def check_if_report_exists(self):

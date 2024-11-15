@@ -73,8 +73,8 @@ class PodcastImage:
                 try:
                     with Image.open(image_file) as img:
                         img.thumbnail((cover_size, cover_size))
-                        img.save(self.podcast.folder_path.parent / f'{self.podcast.name}_cover.jpg', format='JPEG')
-                        log(f"Resized image saved as {self.podcast.name}_cover.jpg", "debug")
+                        img.save(self.podcast.folder_path.parent / f'{self.podcast.folder_path.name}_cover.jpg', format='JPEG')
+                        log(f"Resized image saved as {self.podcast.folder_path.name}_cover.jpg", "debug")
                 except Exception as e:
                     log("Failed to resize image", "error")
                     log(e, "debug")
