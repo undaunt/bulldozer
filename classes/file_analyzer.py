@@ -17,16 +17,23 @@ class FileAnalyzer:
         """
         self.podcast = podcast
         self.config = config
+        self.file_dates = defaultdict(list)
+        self.earliest_year = None
+        self.last_episode_date = None
+        self.real_last_episode_date = None
+        self.first_episode_date = None
+        self.real_first_episode_date = None
+        self.original_files = None
 
     def analyze_files(self):
         """
         Analyze the audio files in the podcast folder.
         """
-        self.earliest_year = None
-        self.last_episode_date = None
         self.bitrates = defaultdict(list)
         self.file_formats = defaultdict(list)
-        self.file_years = defaultdict(list)
+        if self.file_dates and not self.original_files:
+            self.original_files = self.file_dates
+        self.file_dates = defaultdict(list)
         self.all_vbr = True
         self.durations = defaultdict(list)
         all_bad = True
@@ -42,6 +49,9 @@ class FileAnalyzer:
                 spin.fail("✖")
                 log("No valid audio files found", "critical")
                 return
+            # sort self.file_dates
+            self.file_dates = dict(sorted(self.file_dates.items()))
+            self.get_date_range()
             spin.ok("✔")
 
     def analyze_audio_file(self, file_path, trailer_patterns):
@@ -78,6 +88,35 @@ class FileAnalyzer:
             self.all_vbr = False
 
         return metadata
+    
+    def get_date_range(self):
+        """
+        Get the date range of the audio files.
+        
+        :return: The date range as a tuple of the earliest and latest dates.
+        """
+        self.file_dates = {k: v for k, v in self.file_dates.items() if v}
+        self.earliest_year = None
+        self.first_episode_date = None
+        self.real_first_episode_date = None
+        self.last_episode_date = None
+        self.real_last_episode_date = None
+
+        for date_str in self.file_dates.keys():
+            year = int(str(date_str)[:4])
+            if self.earliest_year is None or (year and year < self.earliest_year):
+                self.earliest_year = year
+            if self.first_episode_date is None or date_str < self.first_episode_date:
+                self.first_episode_date = date_str
+            if self.last_episode_date is None or date_str > self.last_episode_date:
+                self.last_episode_date = date_str
+
+        for date_str in self.original_files.keys():
+            year = int(str(date_str)[:4])
+            if self.real_first_episode_date is None or (date_str and date_str < self.real_first_episode_date):
+                self.real_first_episode_date = date_str
+            if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
+                self.real_last_episode_date = date_str
 
     def process_metadata(self, metadata, file_path):
         """
@@ -95,10 +134,7 @@ class FileAnalyzer:
             year = None
             date_str = "Unknown"
 
-        if self.earliest_year is None or (year and year < self.earliest_year):
-            self.earliest_year = year
-        if self.last_episode_date is None or date_str > self.last_episode_date:
-            self.last_episode_date = date_str
+        self.file_dates[date_str].append(file_path)
 
         bitrate = metadata['bitrate']
         bitrate_mode = metadata['bitrate_mode']
@@ -107,7 +143,6 @@ class FileAnalyzer:
 
         file_format = file_path.suffix.lower()[1:]
         self.file_formats[file_format].append(file_path)
-        self.file_years[year].append(file_path)
 
     def get_average_duration(self):
         """
@@ -156,10 +191,12 @@ class FileAnalyzer:
             if file_path in format_list:
                 format_list.remove(file_path)
                 log(f"Removed format list path: {file_path}", "debug")
-        for year_list in self.file_years.values():
-            if file_path in year_list:
-                year_list.remove(file_path)
-                log(f"Removed year list path: {file_path}", "debug")
+        for date_list in self.file_dates.values():
+            if file_path in date_list:
+                date_list.remove(file_path)
+                log(f"Removed date list path: {file_path}", "debug")
+
+        self.get_date_range()
 
     def update_file_path(self, old_path, new_path):
         """
@@ -178,8 +215,8 @@ class FileAnalyzer:
                 format_list.remove(old_path)
                 format_list.append(new_path)
                 log(f"Updated format list path: {old_path} -> {new_path}", "debug")
-        for year_list in self.file_years.values():
-            if old_path in year_list:
-                year_list.remove(old_path)
-                year_list.append(new_path)
-                log(f"Updated year list path: {old_path} -> {new_path}", "debug")
+        for date_list in self.file_dates.values():
+            if old_path in date_list:
+                date_list.remove(old_path)
+                date_list.append(new_path)
+                log(f"Updated date list path: {old_path} -> {new_path}", "debug")
