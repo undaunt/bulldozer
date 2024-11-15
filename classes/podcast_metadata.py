@@ -46,24 +46,28 @@ class PodcastMetadata:
         :param search_term: The search term to use for finding the podcast.
         :return: True if the metadata was loaded successfully, False if there was an error, None if the file does not exist.
         """
+        log(f"Loading metadata for {self.podcast.name}", "debug")
         if self.has_data:
+            log(f"Metadata already loaded for {self.podcast.name}", "debug")
             return True
         
-        self.fetch_additional_data(search_term)
-        filename = f"{self.podcast.name}.meta.json"
+        file_path = self.get_file_path()
+        if not file_path:
+            log(f"Metadata file for {self.podcast.name} does not exist.", "debug")
+            return None
         self.check_if_podcast_is_complete()
+        status = None
         try:
-            with open_file_case_insensitive(filename, self.podcast.folder_path) as f:
-                if not f:
-                    return None
+            with file_path.open() as f:
                 self.data = json.load(f)
                 self.has_data = True
+                status = True
         except json.JSONDecodeError:
-            log(f"Invalid JSON in file '{filename}'.", "error")
+            log(f"Invalid JSON in file '{file_path.name}'.", "error")
             log(json.JSONDecodeError.msg, "debug")
-            return False
-        
-        return True
+            status = False
+        self.fetch_additional_data()
+        return status
     
     def check_if_podcast_is_complete(self):
         """
@@ -192,6 +196,7 @@ class PodcastMetadata:
         :param args: Additional arguments required for the API class constructor.
         """
         api_config = self.config.get(api_name, {})
+        log(f"Getting {api_name.capitalize()} data for {self.podcast.name}", "debug")
         
         if not api_config.get('active', False):
             log(f"{api_name.capitalize()} API is not enabled.", "debug")
