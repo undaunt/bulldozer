@@ -455,3 +455,13 @@ def copy_file(source, target):
     :param target: The target file path.
     """
     shutil.copy(source, target)
+
+def convert_paths_to_strings(data):
+    if isinstance(data, dict):
+        return {key: convert_paths_to_strings(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_paths_to_strings(item) for item in data]
+    elif isinstance(data, Path):
+        return str(data)
+    else:
+        return data
