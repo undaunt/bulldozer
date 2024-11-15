@@ -26,6 +26,7 @@ class FileAnalyzer:
         self.last_episode_date = None
         self.bitrates = defaultdict(list)
         self.file_formats = defaultdict(list)
+        self.file_years = defaultdict(list)
         self.all_vbr = True
         self.durations = defaultdict(list)
         all_bad = True
@@ -55,7 +56,7 @@ class FileAnalyzer:
             log(f"Unsupported or corrupt file, skipping: {file_path}", "warning")
             return None
 
-        if not any(pattern.lower() in file_path.lower() for pattern in trailer_patterns):
+        if not any(pattern.lower() in file_path.name.lower() for pattern in trailer_patterns):
             if isinstance(audiofile, MP3) or isinstance(audiofile, MP4):
                 if audiofile.info.length:
                     self.durations[audiofile.info.length].append(file_path)
@@ -90,6 +91,7 @@ class FileAnalyzer:
             year = int(str(recording_date)[:4])
             date_str = str(recording_date)
         else:
+            log(f"Failed to get recording date for: {file_path}", "error")
             year = None
             date_str = "Unknown"
 
@@ -105,6 +107,7 @@ class FileAnalyzer:
 
         file_format = file_path.suffix.lower()[1:]
         self.file_formats[file_format].append(file_path)
+        self.file_years[year].append(file_path)
 
     def get_average_duration(self):
         """
@@ -153,6 +156,10 @@ class FileAnalyzer:
             if file_path in format_list:
                 format_list.remove(file_path)
                 log(f"Removed format list path: {file_path}", "debug")
+        for year_list in self.file_years.values():
+            if file_path in year_list:
+                year_list.remove(file_path)
+                log(f"Removed year list path: {file_path}", "debug")
 
     def update_file_path(self, old_path, new_path):
         """
@@ -171,3 +178,8 @@ class FileAnalyzer:
                 format_list.remove(old_path)
                 format_list.append(new_path)
                 log(f"Updated format list path: {old_path} -> {new_path}", "debuug")
+        for year_list in self.file_years.values():
+            if old_path in year_list:
+                year_list.remove(old_path)
+                year_list.append(new_path)
+                log(f"Updated year list path: {old_path} -> {new_path}", "debuug")
