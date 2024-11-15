@@ -17,28 +17,37 @@ class Report:
         self.podcast = podcast
         self.config = config
 
+    def get_file_path(self, check_files_only=False):
+        """
+        Get the path to the report file in the base directory.
+
+        :param check_files_only: If True, only check for files and do not generate the full report.
+        :return: The path to the report file in the base directory.
+        """
+        base_dir = self.config.get('base_dir', None)
+        if not base_dir:
+            base_dir = self.podcast.folder_path.parent
+        file_name = f'{self.podcast.name}.files.txt' if check_files_only else f'{self.podcast.name}.txt'
+        return Path(base_dir) / file_name
+    
+    def check_if_report_exists(self):
+        """
+        Check if the report file already exists.
+
+        :return: True if the report file already exists, False otherwise.
+        """
+        output_filename = self.get_file_path()
+        return output_filename.exists()
+
     def generate(self, check_files_only=False):
         """
         Generate the report for the podcast.
 
         :param check_files_only: If True, only check for files and do not generate the full report.
         """
-        base_dir = self.config.get('base_dir', None)
-        if not base_dir:
-            base_dir = self.podcast.folder_path.parent
-        base_dir = Path(base_dir)
         template = ReportTemplate(self.podcast, self.config)
         cutoff = self.config.get('cutoff', .5)
-        output_filename = base_dir / f'{self.podcast.name}.txt'
-        if check_files_only:
-            output_filename = base_dir / f'{self.podcast.name}.files.txt'
-
-        if output_filename.exists():
-            if not ask_yes_no(f"Report {output_filename} already exists. Overwrite?"):
-                log(f"Report {output_filename} already exists. Skipping report generation.", "debug")
-                return
-            else:
-                log(f"Overwriting report {output_filename}", "debug")
+        output_filename = self.get_file_path(check_files_only)
 
         with spinner("Generating report") as spin:
             bitrates_counter = Counter()
