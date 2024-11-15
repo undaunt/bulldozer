@@ -130,9 +130,7 @@ class Report:
                 if description:
                     data['description'] = description
 
-                last_episode_included = None
-                if not self.podcast.completed:
-                    last_episode_included = self.podcast.analyzer.last_episode_date
+                last_episode_included = self.podcast.analyzer.last_episode_date
                 data['last_episode_included'] = last_episode_included
 
             bitrate_breakdown = ""
