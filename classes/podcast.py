@@ -8,7 +8,7 @@ from .dupe_checker import DupeChecker
 from .rss import Rss
 from .podcast_image import PodcastImage
 from .podcast_metadata import PodcastMetadata
-from .utils import log, run_command, announce, spinner, get_metadata_directory
+from .utils import log, run_command, announce, spinner, get_metadata_directory, convert_paths_to_strings
 from .database import Database
 
 class Podcast:
@@ -26,7 +26,7 @@ class Podcast:
 
         The Podcast class is responsible for handling the podcast.
         """
-        self.name = name
+        self.name = name.replace(' --CURRENT--', '')
         if '(' in self.name:
             self.name = self.name.split('(')[0].strip()
         self.folder_path = folder_path
@@ -134,9 +134,11 @@ class Podcast:
         shutil.rmtree(self.folder_path)
         exit(1)
 
-    def load_from_database(self):
+    def load_from_database(self, refresh=False):
         """
         Load the podcast data from the database.
+
+        :param refresh: If True, refresh the podcast data.
         """
         hash = self.get_hash()
         podcast_data = self.db.get_podcast(hash)
@@ -145,10 +147,12 @@ class Podcast:
             log(f"Podcast {self.name} not found in the database.", "debug")
             return
 
-        self.metadata.data = podcast_data['metadata']
-        self.metadata.external_data = podcast_data['external_data']
-        self.metadata.has_data = True
-        log(f"Podcast {self.name} loaded from the database.", "debug")
+        self.analyzer.file_dates = podcast_data['files']
+        if not refresh:
+            self.metadata.data = podcast_data['metadata'] if 'metadata' in podcast_data else {}
+            self.metadata.external_data = podcast_data['external_data'] if 'external_data' in podcast_data else {}
+            self.metadata.has_data = True if self.metadata.data or self.metadata.external_data else False
+            log(f"Podcast {self.name} loaded from the database.", "debug")
 
     def add_to_database(self, refresh=False):
         """
@@ -161,9 +165,22 @@ class Podcast:
         if refresh:
             log(f"Refresh is true, deleting podcast {self.name} from the database.", "debug")
             self.db.delete_podcast(hash)
+        
+        files = convert_paths_to_strings(self.analyzer.file_dates)
+        self.db.insert_podcast(hash, files)
+        self.db.close()
+        log(f"Podcast {self.name} added to the database.", "debug")
+
+    def add_metadata_to_database(self):
+        """
+        Add this podcast to the database.
+
+        :param refresh: If True, refresh the podcast data.
+        """
+        hash = self.get_hash()
         metadata = self.metadata.data
         external_data = self.metadata.external_data
-        self.db.insert_podcast(hash, metadata, external_data)
+        self.db.update_podcast(hash, metadata=metadata, external_data=external_data)
         self.db.close()
         log(f"Podcast {self.name} added to the database.", "debug")
 
