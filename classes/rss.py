@@ -93,7 +93,7 @@ class Rss:
         log(f"Renaming RSS file from {old_file_path} to {new_file_path}", "debug")
         old_file_path.rename(new_file_path)
 
-    def get_metadata(self):
+    def get_metadata_rename_folder(self):
         """
         Get the metadata from the RSS feed.
 
