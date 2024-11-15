@@ -14,18 +14,16 @@ class Database:
         self.table = self.db.table('podcasts')
         self.Podcast = Query()
     
-    def insert_podcast(self, hash, metadata, external_data):
+    def insert_podcast(self, hash, files):
         """
         Insert a new podcast entry into the database.
         
         :param hash: Hash used as a unique identifier.
-        :param metadata: Metadata dictionary retrieved from a JSON file.
-        :param external_data: Dictionary with external service data.
+        :param files: Files dictionary.
         """
         podcast_data = {
             'hash': hash,
-            'metadata': metadata,
-            'external_data': external_data
+            'files': files,
         }
         self.table.upsert(podcast_data, self.Podcast.hash == hash)
     
