@@ -1,5 +1,7 @@
 # podcast.py
+import re
 import shutil
+import hashlib
 from .file_organizer import FileOrganizer
 from .file_analyzer import FileAnalyzer
 from .dupe_checker import DupeChecker
@@ -7,6 +9,7 @@ from .rss import Rss
 from .podcast_image import PodcastImage
 from .podcast_metadata import PodcastMetadata
 from .utils import log, run_command, announce, spinner, get_metadata_directory
+from .database import Database
 
 class Podcast:
     def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None):
@@ -37,8 +40,25 @@ class Podcast:
         self.image = PodcastImage(self, self.config)
         self.metadata = PodcastMetadata(self, self.config)
         self.analyzer = FileAnalyzer(self, config)
+        self.db = Database(config.get('database', {}).get('file', './podcasts.db'))
         if self.name != 'unknown podcast' and check_duplicates:
             self.check_for_duplicates()
+
+    def get_metadata(self, critical=True):
+        """
+        Get the podcast metadata.
+
+        :return: The podcast metadata.
+        """
+        metadata = self.rss.get_metadata_rename_folder()
+
+        if not metadata and critical:
+            announce("Failed to get metadata from RSS feed", "critical")
+            exit(1)
+        elif not metadata:
+            return metadata
+
+        self.name = self.rss.metadata['name']
 
     def download_episodes(self):
         """
@@ -47,14 +67,7 @@ class Podcast:
         :param episode_template: The template for the episode file names.
         :param threads: The number of threads to use for downloading.
         """
-        metadata = self.rss.get_metadata()
-
-        if not metadata:
-            announce("Failed to get metadata from RSS feed", "critical")
-            exit(1)
-
-        self.name = self.rss.metadata['name']
-
+        self.get_metadata()
         self.check_for_duplicates()
 
         episode_template = self.config.get("podcast_dl", {}).get('episode_template', "{{podcast_title}} - {{release_year}}-{{release_month}}-{{release_day}} {{title}}")
@@ -120,3 +133,56 @@ class Podcast:
         log("Cleaning up and exiting...", "debug")
         shutil.rmtree(self.folder_path)
         exit(1)
+
+    def load_from_database(self):
+        """
+        Load the podcast data from the database.
+        """
+        hash = self.get_hash()
+        podcast_data = self.db.get_podcast(hash)
+
+        if not podcast_data:
+            log(f"Podcast {self.name} not found in the database.", "debug")
+            return
+
+        self.metadata.data = podcast_data['metadata']
+        self.metadata.external_data = podcast_data['external_data']
+        self.metadata.has_data = True
+        log(f"Podcast {self.name} loaded from the database.", "debug")
+
+    def add_to_database(self, refresh=False):
+        """
+        Add this podcast to the database.
+
+        :param refresh: If True, refresh the podcast data.
+        """
+        hash = self.get_hash()
+
+        if refresh:
+            log(f"Refresh is true, deleting podcast {self.name} from the database.", "debug")
+            self.db.delete_podcast(hash)
+        metadata = self.metadata.data
+        external_data = self.metadata.external_data
+        self.db.insert_podcast(hash, metadata, external_data)
+        self.db.close()
+        log(f"Podcast {self.name} added to the database.", "debug")
+
+    def get_clean_name(self):
+        """
+        Get the clean name of the podcast.
+
+        :return: The clean name of the podcast.
+        """
+        match = re.search(self.config.get('clean_name', r'^(.*?)(?=\()'), self.name)
+
+        if not match:
+            return self.name
+        return match.group(1).strip()
+
+    def get_hash(self):
+        """
+        Get the hash of the podcast.
+
+        :return: The hash of the podcast.
+        """
+        return hashlib.md5(self.get_clean_name().encode('utf-8')).hexdigest()
