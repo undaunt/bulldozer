@@ -172,14 +172,14 @@ class FileAnalyzer:
             if old_path in bitrate_list:
                 bitrate_list.remove(old_path)
                 bitrate_list.append(new_path)
-                log(f"Updated bitrate path: {old_path} -> {new_path}", "debuug")
+                log(f"Updated bitrate path: {old_path} -> {new_path}", "debug")
         for format_list in self.file_formats.values():
             if old_path in format_list:
                 format_list.remove(old_path)
                 format_list.append(new_path)
-                log(f"Updated format list path: {old_path} -> {new_path}", "debuug")
+                log(f"Updated format list path: {old_path} -> {new_path}", "debug")
         for year_list in self.file_years.values():
             if old_path in year_list:
                 year_list.remove(old_path)
                 year_list.append(new_path)
-                log(f"Updated year list path: {old_path} -> {new_path}", "debuug")
+                log(f"Updated year list path: {old_path} -> {new_path}", "debug")
