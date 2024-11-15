@@ -51,6 +51,9 @@ cache:
 # The cutoff for using mixed labels
 cutoff: .7
 
+# If true, uploads of active podcasts will be split on current year
+full_years_only: false
+
 ## API Settings
 # The Podchaser API settings
 podchaser: 
@@ -284,6 +287,9 @@ date_pattern: '\b(\d{4}-\d{2}-\d{2})\b'
 # How to prefix the episode number if dates are conflicting
 conflicing_dates_replacement: '{prefix} - {date} Ep. {episode} - {suffix}'
 
+# Gets a clean name from the folder name
+clean_name: '^(.*?)(?=\()'
+
 ## Templates
 # The template for the name to use in the report
 name_template: "{{ podcast_name }}{{ complete_str }}{{ premium_show }} [{{ start_year_str }}{{ last_episode_date_str }}/{{ file_format }}-{{ overall_bitrate }}]"
@@ -298,6 +304,12 @@ links_section_template: |
 
 # The template for the report
 template_file: default
+
+## Database settings
+# The database file to use
+database:
+  active: true # Whether to use the database
+  file: ./podcasts.db # The database file
 
 ## Logging settings
 # The log level for the application
