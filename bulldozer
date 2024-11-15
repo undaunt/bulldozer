@@ -21,6 +21,7 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     """
     global config
     print("· • —– ++ ---| Bulldozer v0.6.0 |--- ++ —– • ·")
+    database_active = config.get("database", {}).get("active", True)
 
     if os.path.isdir(input):
         folder_path = Path(input)
@@ -40,15 +41,17 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     if download_only:
         announce(f"Podcast downloaded!", "celebrate")
         return
+    if database_active:
+        podcast.load_from_database(refresh)
+
     podcast.analyze_files()
+
+    if database_active and not podcast.analyzer.original_files:
+        podcast.add_to_database(refresh)
+
     if not report_only:
         podcast.organize_files()
-    
-    database_active = config.get("database", {}).get("active", True)
-
-    if not refresh and database_active:
-        podcast.load_from_database()
-    
+        
     report  = Report(podcast, config)
     report_exists = report.check_if_report_exists()
     generate_report = True
@@ -66,7 +69,7 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
         announce(f"Failed to load metadata for {name}, skipping report generation", "warning")
     elif generate_report:
         if database_active:
-            podcast.add_to_database(refresh)
+            podcast.add_metadata_to_database()
         report.generate()
     if report_only:
         return
