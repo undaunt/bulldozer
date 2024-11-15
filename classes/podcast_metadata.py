@@ -46,6 +46,9 @@ class PodcastMetadata:
         :param search_term: The search term to use for finding the podcast.
         :return: True if the metadata was loaded successfully, False if there was an error, None if the file does not exist.
         """
+        if self.has_data:
+            return True
+        
         self.fetch_additional_data(search_term)
         filename = f"{self.podcast.name}.meta.json"
         self.check_if_podcast_is_complete()
@@ -288,3 +291,9 @@ class PodcastMetadata:
         new_file_path = new_folder / file_path.name
         copy_file(file_path, new_file_path)
         log(f"Duplicated meta {file_path.name} to {new_file_path}", "debug")
+
+    def get_external_ids(self):
+        ids = []
+        for dataset in self.external_data.values():
+            ids.append(dataset.get('id'))
+        return ids
