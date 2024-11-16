@@ -111,7 +111,7 @@ class Report:
                     last_episode_date_str = ""
 
             if last_episode_date_str:
-                last_episode_date_str = f"-{last_episode_date_str}"
+                last_episode_date_str = f"{last_episode_date_str}"
 
             if file_format != "Mixed":
                 file_format = file_format.upper()
