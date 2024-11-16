@@ -3,6 +3,7 @@ import mutagen
 from collections import defaultdict
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
+from mutagen.mp3 import BitrateMode
 from .utils import spinner, log
 
 class FileAnalyzer:
@@ -75,7 +76,7 @@ class FileAnalyzer:
         if isinstance(audiofile, MP3):
             metadata['recording_date'] = audiofile.get("TDRC")
             metadata['bitrate'] = round(audiofile.info.bitrate / 1000)
-            metadata['bitrate_mode'] = "VBR" if audiofile.info.bitrate_mode == "vbr" else "CBR"
+            metadata['bitrate_mode'] = "VBR" if audiofile.info.bitrate_mode == BitrateMode.VBR else "CBR"
         elif isinstance(audiofile, MP4):
             metadata['recording_date'] = audiofile.tags.get("\xa9day", [None])[0]
             metadata['bitrate'] = round(audiofile.info.bitrate / 1000)
