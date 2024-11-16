@@ -39,7 +39,6 @@ class ReportTemplate:
         """
         data.update({
             "podcast_name": self.podcast.name,
-            "complete": self.podcast.completed,
             "complete_str": " (Complete)" if self.podcast.completed else "",
             "premium_show": self.podcast.rss.check_for_premium_show(),
         })

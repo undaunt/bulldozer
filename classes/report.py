@@ -127,11 +127,11 @@ class Report:
                 "real_last_episode_date_str": real_last_episode_date_str,
                 "file_format": file_format,
                 "overall_bitrate": overall_bitrate,
+                "complete": self.podcast.completed,
             }
             # data should be dynamic data + static data
             data = dynamic_data
             data['number_of_files'] = total_files
-            data['completed'] = self.podcast.completed
             data['average_duration'] = self.podcast.analyzer.get_average_duration()
             data['longest_duration'] = self.podcast.analyzer.get_longest_duration()
             data['shortest_duration'] = self.podcast.analyzer.get_shortest_duration()
