@@ -93,7 +93,7 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appl
 
 {%- if bitrate_breakdown or differing_bitrates or file_format_breakdown or differing_file_formats %}
 
-{%- if bitrate_breakdown %}This upload has files with mixed bitrates.
+{% if bitrate_breakdown %}This upload has files with mixed bitrates.
 [spoiler][code]{{ bitrate_breakdown }}[/code][/spoiler]
 {%- endif %}
 {%- if differing_bitrates %}These files are not {{ overall_bitrate }}:
@@ -107,7 +107,7 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appl
 {%- endif %}
 {%- endif %}
 
-[size=10]Powered by [url=https://github.com/lewler/bulldozer]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
+[size=10]Powered by [url=https://unwalled.cc/wikis/16]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
 [/center]
 
 --- Torrent Description ---
