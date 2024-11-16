@@ -292,7 +292,7 @@ clean_name: '^(.*?)(?=\()'
 
 ## Templates
 # The template for the name to use in the report
-name_template: "{{ podcast_name }}{{ complete_str }}{{ premium_show }} [{{ start_year_str }}{{ last_episode_date_str }}/{{ file_format }}-{{ overall_bitrate }}]"
+name_template_file: name
 
 # The template for the links themselves
 link_template: "[url={{ link }}]{{ text }}[/url]"
