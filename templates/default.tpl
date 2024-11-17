@@ -44,7 +44,7 @@ Tags: {{ tags }}
 {%- if first_episode_date_str %}
 {%- if first_episode_date_str == last_episode_date_str %} -- Date: [b]{{ first_episode_date_str }}[/b]
 {%- else %} -- {% if first_episode_date_str == real_first_episode_date_str %}Start Date{%- else %}First Episode Included{%- endif %}: [b]{{ first_episode_date_str }}[/b]
-    {%- if last_episode_date_str and not podchaser.status == 'ACTIVE' %} -- End Date: [b]{{ last_episode_date_str }}[/b]
+    {%- if last_episode_date_str and (not podchaser.status == 'ACTIVE' or completed) %} -- End Date: [b]{{ last_episode_date_str }}[/b]
     {%- elif last_episode_date_str %} -- Last Episode Included: [b]{{ last_episode_date_str }}[/b]
     {%- endif %}
 {%- endif %}
@@ -53,7 +53,7 @@ Tags: {{ tags }}
 {%- if podnews and podnews.appleRating %}
 
 Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRatingCount }} votes{%- endif %})
-{%- if podchaser.ratingAverage %}-- Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 %}s{%- endif %})
+{%- if podchaser.ratingAverage %} -- Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 %}s{%- endif %})
 {%- endif %}
 {%- endif %}
 {%- elif podcastindex %}
@@ -72,10 +72,16 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appl
 {% if file_format %}File Format: [b]{{ file_format }}[/b]{%- endif %}
 {%- if overall_bitrate %} -- Overall Bitrate: [b]{{ overall_bitrate }}[/b]{%- endif %}
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
-{% if last_episode_date_str %}{%- if completed %}End Date{%- else %}Last Episode Included{%- endif %}: [b]{{ last_episode_date_str }}[/b]{%- endif %}
-{%- if average_duration %}{%- if last_episode_date_str %} -- {% endif %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
+{% if first_episode_date_str %}
+{%- if first_episode_date_str == last_episode_date_str %}Date: [b]{{ first_episode_date_str }}[/b]
+{%- else %}{% if first_episode_date_str == real_first_episode_date_str %}Start Date{%- else %}First Episode Included{%- endif %}: [b]{{ first_episode_date_str }}[/b]
+    {%- if last_episode_date_str %} -- {%- if completed %}End Date{%- else %}Last Episode Included{%- endif %}: [b]{{ last_episode_date_str }}[/b]
+    {%- endif %}
+{%- endif %}
+{%- endif %}
+{%- if average_duration %}{%- if first_episode_date_str %} -- {% endif %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
-{%- if average_duration or last_episode_date_str %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
+{%- if average_duration or first_episode_date_str %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
 {%- endif %}
 {%- else %}
 [size=30][b]{{ name_clean }}[/b][/size]
@@ -84,7 +90,13 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appl
 {% if file_format %}File Format: [b]{{ file_format }}[/b]{%- endif %}
 {%- if overall_bitrate %} -- Overall Bitrate: [b]{{ overall_bitrate }}[/b]{%- endif %}
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
-{% if last_episode_date_str %}{%- if completed %}End Date{%- else %}Last Episode Included{%- endif %}: [b]{{ last_episode_date_str }}[/b]{%- endif %}
+{% if first_episode_date_str %}
+{%- if first_episode_date_str == last_episode_date_str %}Date: [b]{{ first_episode_date_str }}[/b]
+{%- else %}{% if first_episode_date_str == real_first_episode_date_str %}Start Date{%- else %}First Episode Included{%- endif %}: [b]{{ first_episode_date_str }}[/b]
+    {%- if last_episode_date_str %} -- {%- if completed %}End Date{%- else %}Last Episode Included{%- endif %}: [b]{{ last_episode_date_str }}[/b]
+    {%- endif %}
+{%- endif %}
+{%- endif %}
 {%- if average_duration %}{%- if last_episode_date_str %} -- {% endif %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
 {%- if last_episode_date_str or average_duration %} -- {%- endif %} Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
