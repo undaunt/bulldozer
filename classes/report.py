@@ -134,7 +134,6 @@ class Report:
                 "shortest_duration": self.podcast.analyzer.get_shortest_duration(),
                 "name_clean": self.podcast.name,
                 "premium_show": self.podcast.rss.check_for_premium_show(),
-                "complete_str": " (Complete)" if self.podcast.completed else "",
             }
             log(f"Data for the name: {data}", "debug")
             name = template.get_name(data)
