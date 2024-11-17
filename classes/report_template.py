@@ -37,12 +37,6 @@ class ReportTemplate:
         :param data: A dictionary containing key-value pairs that match placeholders in the template.
         :return: A string with the formatted name.
         """
-        data.update({
-            "podcast_name": self.podcast.name,
-            "complete_str": " (Complete)" if self.podcast.completed else "",
-            "premium_show": self.podcast.rss.check_for_premium_show(),
-        })
-
         return self.name_template.render(data)
     
     def get_links(self, links):

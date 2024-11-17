@@ -118,7 +118,7 @@ class Report:
 
             end_year_string = last_episode_date_str.split()[-1] if last_episode_date_str else ""
 
-            dynamic_data = {
+            data = {
                 "start_year_str": start_year_str,
                 "end_year_str": end_year_string,
                 "first_episode_date_str": first_episode_date_str,
@@ -128,19 +128,18 @@ class Report:
                 "file_format": file_format,
                 "overall_bitrate": overall_bitrate,
                 "completed": self.podcast.completed,
+                "number_of_files": total_files,
+                "average_duration": self.podcast.analyzer.get_average_duration(),
+                "longest_duration": self.podcast.analyzer.get_longest_duration(),
+                "shortest_duration": self.podcast.analyzer.get_shortest_duration(),
+                "name_clean": self.podcast.name,
+                "premium_show": self.podcast.rss.check_for_premium_show(),
+                "complete_str": " (Complete)" if self.podcast.completed else "",
             }
-            # data should be dynamic data + static data
-            data = dynamic_data
-            data['number_of_files'] = total_files
-            data['average_duration'] = self.podcast.analyzer.get_average_duration()
-            data['longest_duration'] = self.podcast.analyzer.get_longest_duration()
-            data['shortest_duration'] = self.podcast.analyzer.get_shortest_duration()
-            log(f"Dynamic data for the name: {dynamic_data}", "debug")
-            name = template.get_name(dynamic_data)
+            log(f"Data for the name: {data}", "debug")
+            name = template.get_name(data)
             if name:
                 data['name'] = name
-
-            data['name_clean'] = self.podcast.name
 
             if not check_files_only:
                 tags = self.podcast.metadata.get_tags()

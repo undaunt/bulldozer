@@ -1,4 +1,4 @@
-{{ podcast_name }}{{ complete_str }}{{ premium_show }} [
+{{ name_clean }}{{ complete_str }}{{ premium_show }} [
 {%- if first_episode_date_str == real_first_episode_date_str %}{{ start_year_str }}
 {%- elif first_episode_date_str %}{{ first_episode_date_str }}
 {%- endif %}-
