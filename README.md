@@ -11,8 +11,8 @@ Bulldozer is a script designed to automate the process of downloading, organizin
 - Data fetching from the Podchaser and Podcastindex API
 - Data fetching from Podnews
 - Automatic RSS censoring for matching premium sources
-- Local database with metadata for improved flexibility
-- Option to split active podcasts on current year (requires the use of the database)
+- Optional local database with metadata for improved flexibility
+- Option to split active podcasts on current year (database recommended)
 - Torrent file creation with piece size calculation
 
 ## Requirements
