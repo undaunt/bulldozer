@@ -17,28 +17,62 @@ class Report:
         self.podcast = podcast
         self.config = config
 
+    def get_file_path(self, check_files_only=False):
+        """
+        Get the path to the report file in the base directory.
+
+        :param check_files_only: If True, only check for files and do not generate the full report.
+        :return: The path to the report file in the base directory.
+        """
+        base_dir = self.config.get('base_dir', None)
+        if not base_dir:
+            base_dir = self.podcast.folder_path.parent
+        file_name = f'{self.podcast.folder_path.name}.files.txt' if check_files_only else f'{self.podcast.folder_path.name}.txt'
+        return Path(base_dir) / file_name
+    
+    def check_if_report_exists(self):
+        """
+        Check if the report file already exists.
+
+        :return: True if the report file already exists, False otherwise.
+        """
+        output_filename = self.get_file_path()
+        return output_filename.exists()
+    
+    def get_date(self, date_property, property_name, spin):
+        """
+        Get the date string for the property.
+
+        :param date_property: The date property to format.
+        :param property_name: The name of the property.
+        :param spin: The spinner object.
+
+        :return: The formatted date string.
+        """
+        date_format_long = self.config.get('date_format_long', '%B %d %Y')
+        try:
+            return format_last_date(date_property, date_format_long) if date_property else "Unknown"
+        except ValueError as e:
+            log(f"Error formatting date", "error")
+            log(e, "debug")
+            spin.stop()
+            date_str = take_input(f"Can't use ({date_property}). Enter {property_name} (YYYY-MM-DD)")
+            if not date_str:
+                log(f"No {property_name} entered. Skipping report generation.", "debug")
+                spin.fail("✖")
+                return None
+            spin = spinner("Generating report")
+            return format_last_date(date_str, date_format_long)
+
     def generate(self, check_files_only=False):
         """
         Generate the report for the podcast.
 
         :param check_files_only: If True, only check for files and do not generate the full report.
         """
-        base_dir = self.config.get('base_dir', None)
-        if not base_dir:
-            base_dir = self.podcast.folder_path.parent
-        base_dir = Path(base_dir)
         template = ReportTemplate(self.podcast, self.config)
         cutoff = self.config.get('cutoff', .5)
-        output_filename = base_dir / f'{self.podcast.name}.txt'
-        if check_files_only:
-            output_filename = base_dir / f'{self.podcast.name}.files.txt'
-
-        if output_filename.exists():
-            if not ask_yes_no(f"Report {output_filename} already exists. Overwrite?"):
-                log(f"Report {output_filename} already exists. Skipping report generation.", "debug")
-                return
-            else:
-                log(f"Overwriting report {output_filename}", "debug")
+        output_filename = self.get_file_path(check_files_only)
 
         with spinner("Generating report") as spin:
             bitrates_counter = Counter()
@@ -65,20 +99,11 @@ class Report:
             else:
                 file_format = "Mixed"
 
-            date_format_long = self.config.get('date_format_long', '%B %d %Y')
             start_year_str = str(self.podcast.analyzer.earliest_year) if self.podcast.analyzer.earliest_year else "Unknown"
-            try:
-                last_episode_date_str = format_last_date(self.podcast.analyzer.last_episode_date, date_format_long) if self.podcast.analyzer.last_episode_date else "Unknown"
-            except ValueError as e:
-                log(f"Error formatting last episode date", "error")
-                log(e, "debug")
-                spin.stop()
-                last_episode_date = take_input(f"Can't use ({self.podcast.analyzer.last_episode_date}). Enter last episode date (YYYY-MM-DD)")
-                if not last_episode_date:
-                    log("No last episode date entered. Skipping report generation.", "debug")
-                    spin.fail("✖")
-                spin = spinner("Generating report")
-                last_episode_date_str = format_last_date(last_episode_date, date_format_long)
+            first_episode_date_str = self.get_date(self.podcast.analyzer.first_episode_date, "first episode date", spin)
+            real_first_episode_date_str = self.get_date(self.podcast.analyzer.real_first_episode_date, "real first episode date", spin)
+            last_episode_date_str = self.get_date(self.podcast.analyzer.last_episode_date, "last episode date", spin)
+            real_last_episode_date_str = self.get_date(self.podcast.analyzer.real_last_episode_date, "real last episode date", spin)
 
             if self.podcast.completed:
                 last_episode_date_str = last_episode_date_str.split()[2]
@@ -86,27 +111,34 @@ class Report:
                     last_episode_date_str = ""
 
             if last_episode_date_str:
-                last_episode_date_str = f"-{last_episode_date_str}"
+                last_episode_date_str = f"{last_episode_date_str}"
 
             if file_format != "Mixed":
                 file_format = file_format.upper()
 
-            dynamic_data = {
-                "start_year_str": start_year_str,
-                "last_episode_date_str": last_episode_date_str,
-                "file_format": file_format,
-                "overall_bitrate": overall_bitrate,
-            }
+            end_year_string = last_episode_date_str.split()[-1] if last_episode_date_str else ""
+
             data = {
+                "start_year_str": start_year_str,
+                "end_year_str": end_year_string,
+                "first_episode_date_str": first_episode_date_str,
+                "real_first_episode_date_str": real_first_episode_date_str,
+                "last_episode_date_str": last_episode_date_str,
+                "real_last_episode_date_str": real_last_episode_date_str,
                 "file_format": file_format,
                 "overall_bitrate": overall_bitrate,
+                "completed": self.podcast.completed,
                 "number_of_files": total_files,
+                "average_duration": self.podcast.analyzer.get_average_duration(),
+                "longest_duration": self.podcast.analyzer.get_longest_duration(),
+                "shortest_duration": self.podcast.analyzer.get_shortest_duration(),
+                "name_clean": self.podcast.name,
+                "premium_show": self.podcast.rss.check_for_premium_show(),
             }
-            name = template.get_name(dynamic_data)
+            log(f"Data for the name: {data}", "debug")
+            name = template.get_name(data)
             if name:
                 data['name'] = name
-
-            data['name_clean'] = self.podcast.name
 
             if not check_files_only:
                 tags = self.podcast.metadata.get_tags()
@@ -117,9 +149,7 @@ class Report:
                 if description:
                     data['description'] = description
 
-                last_episode_included = None
-                if not self.podcast.completed:
-                    last_episode_included = self.podcast.analyzer.last_episode_date
+                last_episode_included = self.podcast.analyzer.last_episode_date
                 data['last_episode_included'] = last_episode_included
 
             bitrate_breakdown = ""

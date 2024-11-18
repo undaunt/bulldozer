@@ -39,23 +39,29 @@ Tags: {{ tags }}
 {% if file_format %}File Format: [b]{{ file_format }}[/b]{%- endif %}
 {%- if overall_bitrate %} -- Overall Bitrate: [b]{{ overall_bitrate }}[/b]{%- endif %}
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
-{% if podchaser.avgEpisodeLength %}Average Episode Length: [b]{{ (podchaser.avgEpisodeLength / 60) | round(0) | int }} mins[/b]{%- endif %}
+{% if average_duration %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
 
-{%- if podchaser.startDate %}
-{%- if podchaser.startDate[:10] == podchaser.latestEpisodeDate[:10] %} -- Date: [b]{{ podchaser.startDate[:10] }}[/b]
-{%- else %} -- Start Date: [b]{{ podchaser.startDate[:10] }}[/b]
-    {%- if podchaser.latestEpisodeDate and not podchaser.status == 'ACTIVE' %} -- End Date: [b]{{ podchaser.latestEpisodeDate[:10] }}[/b]
-    {%- elif last_episode_included %} -- Last Episode Included: [b]{{ last_episode_included }}[/b]
-    {%- endif %}
+{%- if first_episode_date_str %}
+{%- if first_episode_date_str == last_episode_date_str %} -- Date: [b]{{ first_episode_date_str }}[/b]
+{%- else %} -- 
+{%- if first_episode_date_str == real_first_episode_date_str -%}
+Start Date
+{%- else -%}
+First Episode Included
+{%- endif -%}: [b]{{ first_episode_date_str }}[/b]
+{%- if last_episode_date_str %} -- {% if (not podchaser.status == 'ACTIVE' or completed) %}End Date
+{%- else -%}
+Last Episode Included
+{%- endif -%}: [b]{{ last_episode_date_str }}[/b]
 {%- endif %}
 {%- endif %}
 
 {%- if podnews and podnews.appleRating %}
 
-Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes){%- endif %}
-{%- if podchaser.ratingAverage %}{%- if podnews and podnews.appleRating %} -- {%- else %}
-
-{% endif %} Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} votes){%- endif %}
+Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRatingCount }} votes{%- endif %})
+{%- if podchaser.ratingAverage %} -- Podchaser Rating: [b]{{ podchaser.ratingAverage }}[/b] ({{ podchaser.ratingCount }} vote{%- if podchaser.ratingCount > 1 %}s{%- endif %})
+{%- endif %}
+{%- endif %}
 {%- elif podcastindex %}
 {%- if podcastindex.author %}
 [b][size=10]{{ podcastindex.author_article | upper }}[/size] [size=14]{{ podcastindex.author | upper }}[/size] [size=10]PRODUCTION[/size][/b]
@@ -72,9 +78,21 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingC
 {% if file_format %}File Format: [b]{{ file_format }}[/b]{%- endif %}
 {%- if overall_bitrate %} -- Overall Bitrate: [b]{{ overall_bitrate }}[/b]{%- endif %}
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
-{% if last_episode_included %}Last Episode Included: [b]{{ last_episode_included }}[/b]{%- endif %}
+{% if first_episode_date_str %}
+{%- if first_episode_date_str == last_episode_date_str -%}
+Date: [b]{{ first_episode_date_str }}[/b]
+{%- else -%}
+{%- if first_episode_date_str == real_first_episode_date_str -%}
+Start Date
+{%- else -%}
+First Episode Included
+{%- endif %}: [b]{{ first_episode_date_str }}[/b]
+{%- if last_episode_date_str %} -- {% if completed %}End Date{% else %}Last Episode Included{% endif %}: [b]{{ last_episode_date_str }}[/b]{%- endif %}
+{%- endif %}
+{%- endif %}
+{%- if average_duration %}{%- if first_episode_date_str %} -- {% endif %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
-{%- if last_episode_included %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes)
+{%- if average_duration or first_episode_date_str %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
 {%- endif %}
 {%- else %}
 [size=30][b]{{ name_clean }}[/b][/size]
@@ -83,29 +101,45 @@ Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingC
 {% if file_format %}File Format: [b]{{ file_format }}[/b]{%- endif %}
 {%- if overall_bitrate %} -- Overall Bitrate: [b]{{ overall_bitrate }}[/b]{%- endif %}
 {%- if number_of_files %} -- Number of Episodes: [b]{{ number_of_files }}[/b]{% endif %}
-{% if last_episode_included %}Last Episode Included: [b]{{ last_episode_included }}[/b]{%- endif %}
+{% if first_episode_date_str %}
+{%- if first_episode_date_str == last_episode_date_str %}Date: [b]{{ first_episode_date_str }}[/b]
+{%- else -%}
+{%- if first_episode_date_str == real_first_episode_date_str %}Start Date{%- else -%}First Episode Included{%- endif %}: [b]{{ first_episode_date_str }}[/b]
+{%- if last_episode_date_str %} -- {%- if completed %}End Date{%- else -%}Last Episode Included{%- endif -%}: [b]{{ last_episode_date_str }}[/b]{%- endif %}
+{%- endif %}
+{%- endif %}
+{%- if average_duration %}{%- if last_episode_date_str %} -- {% endif %}Average Episode Length: [b]{{ (average_duration / 60) | round(0) | int }} mins[/b]{%- endif %}
 {%- if podnews and podnews.appleRating %}
-{%- if last_episode_included %} -- {%- endif %} Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({{ podnews.appleRatingCount }} votes)
+{%- if last_episode_date_str or average_duration %} -- {% endif %}Apple Podcasts Rating: [b]{{ podnews.appleRating }}[/b] ({%- if not podnews.appleRatingCount %}1 vote{%- else %}{{ podnews.appleRating }} votes{%- endif %})
 {%- endif %}
 {%- endif %}
 
 {%- if bitrate_breakdown or differing_bitrates or file_format_breakdown or differing_file_formats %}
 
-{%- if bitrate_breakdown %}This upload has files with mixed bitrates.
+{% if bitrate_breakdown %}This upload has files with mixed bitrates.
 [spoiler][code]{{ bitrate_breakdown }}[/code][/spoiler]
 {%- endif %}
 {%- if differing_bitrates %}These files are not {{ overall_bitrate }}:
 [spoiler][code]{{ differing_bitrates }}[/code][/spoiler]
 {%- endif %}
-{%- if file_format_breakdown %}This upload has files in mixed file formats.
+{%- if file_format_breakdown %}
+{%- if bitrate_breakdown or differing_bitrates %}
+
+{%- endif -%}
+This upload has files in mixed file formats.
 [spoiler][code]{{ file_format_breakdown }}[/code][/spoiler]
 {%- endif %}
-{%- if differing_file_formats %}These files are not {{ file_format }}:
+{%- if differing_file_formats %}
+{%- if bitrate_breakdown or differing_bitrates %}
+
+{%- endif -%}
+These files are not {{ file_format }}:
 [spoiler][code]{{ differing_file_formats }}[/code][/spoiler]
 {%- endif %}
 {%- endif %}
+{%- endif %}
 
-[size=10]Powered by [url=https://github.com/lewler/bulldozer]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
+[size=10]Powered by [url=https://unwalled.cc/wikis/16]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
 [/center]
 
 --- Torrent Description ---

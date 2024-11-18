@@ -6,7 +6,7 @@ import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from titlecase import titlecase
-from .utils import spinner, get_metadata_directory, log, find_case_insensitive_files
+from .utils import spinner, get_metadata_directory, log, find_case_insensitive_files, copy_file
 from .utils import special_capitalization, archive_metadata, ask_yes_no, announce, perform_replacements
 
 class Rss:
@@ -93,7 +93,7 @@ class Rss:
         log(f"Renaming RSS file from {old_file_path} to {new_file_path}", "debug")
         old_file_path.rename(new_file_path)
 
-    def get_metadata(self):
+    def get_metadata_rename_folder(self):
         """
         Get the metadata from the RSS feed.
 
@@ -298,3 +298,20 @@ class Rss:
             log(e, "debug")
             return []
 
+    def duplicate(self, new_folder):
+        """
+        Duplicate the RSS feed file to a new folder.
+
+        :param new_folder: The folder to duplicate the RSS feed file to.
+        """
+        file_path = self.get_file_path()
+        
+        if not file_path:
+            log(f"RSS feed {file_path} does not exist - can't duplicate.", "debug")
+            return
+        
+        new_file_path = get_metadata_directory(new_folder, self.config) / file_path.name
+        if not new_file_path.parent.exists():
+            new_file_path.parent.mkdir(parents=True, exist_ok=True)
+        copy_file(file_path, new_file_path)
+        log(f"Duplicating RSS feed {file_path} to {new_file_path}", "debug")

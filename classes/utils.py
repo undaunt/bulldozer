@@ -446,3 +446,22 @@ def perform_replacements(string, file_replacements):
                 string = re.sub(pattern, replacement, string)
 
     return string
+
+def copy_file(source, target):
+    """
+    Copy a file from the source to the target.
+
+    :param source: The source file path.
+    :param target: The target file path.
+    """
+    shutil.copy(source, target)
+
+def convert_paths_to_strings(data):
+    if isinstance(data, dict):
+        return {key: convert_paths_to_strings(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_paths_to_strings(item) for item in data]
+    elif isinstance(data, Path):
+        return str(data)
+    else:
+        return data

@@ -5,13 +5,15 @@ Bulldozer is a script designed to automate the process of downloading, organizin
 ## Features
 
 - Download podcast episodes using RSS feeds
-- Check for duplicate episodes using an external API
+- Check for duplicate episodes using tracker API
 - Organize and analyze downloaded files
 - Generate reports based on the downloaded content
 - Data fetching from the Podchaser and Podcastindex API
 - Data fetching from Podnews
 - Automatic RSS censoring for matching premium sources
-- Create torrent files for sharing podcast episodes
+- Optional local database with metadata for improved flexibility
+- Option to split active podcasts on current year (database required)
+- Torrent file creation with piece size calculation
 
 ## Requirements
 
@@ -62,7 +64,7 @@ Upgrading should be fairly simple, but if you're jumping versions it might get m
 
 2. Make sure requirements are up-to-date
     ```sh
-     pip install -r requirements.txt
+     pip install -r requirements.txt --upgrade
     ```
 
 3. Run the config checker to see if your config is outdated
@@ -91,20 +93,28 @@ chmod +x bulldozer
 
 ### Options
 - `--censor-rss`: Make sure the RSS feed is censored.
+- `--report-only`: Only check the files.
+- `--download-only`: Only downloads the files.
+- `--refresh`: Don't use the data in the database.
 - `--check-files`: Only check the files.
 - `--dupecheck`: Search the API for <input>.
 - `--make-torrent`: Only create a torrent file.
-- `--create-report`: Only create a report.
 - `--check-config`: Check if user config is valid.
-- `--search-term`: Use <input> as search term instead of podcast name.
 - `--log-level`: Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL).
+- `--search-term`: Use <input> as search term instead of podcast name.
 
 ## Project Structure
 
 - bulldozer: Main script
 - classes/: Contains various classes used in the project.
   - apis/: Contains classes to interact with various apis.
+    - podcastindex.py: Interacts with the Podcastindex API
     - podchaser.py: Interacts with the Podchaser API
+  - scrapers/: Contains classes to scrape websites.
+    - podnews.py: Scrapes data from Podnews.
+  - cache.py: Handles the caching.
+  - data_formatter.py: Methods for transforming data.
+  - database.py: Handles the database logic.
   - dupe_checker.py: Checks for duplicates.
   - file_analyzer.py: Analyzes downloaded files.
   - file_organizer.py: Organizes downloaded files.
@@ -139,3 +149,4 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 - [Podchaser API](https://api-docs.podchaser.com/docs/overview) for additional metadata.
 - [Podcastindex API](https://podcastindex.org) for additional metadata.
 - [Podnews](https://podnews.net) for additional metadata.
+- [TinyDB](https://pypi.org/project/tinydb/) for database support.

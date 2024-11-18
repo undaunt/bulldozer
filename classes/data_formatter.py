@@ -146,3 +146,27 @@ class DataFormatter:
             else:
                 new_value = settings.get('if_false', None)
         return self.append_data(data, source, new_prop, new_value, overwrite)
+        
+    def replacer(self, data, source, prop, settings):
+        """
+        Replace text in the property.
+
+        :param data: The data to format.
+        :param source: The source of the data.
+        :param prop: The property to format.
+        :param settings: The settings for the formatter.
+        :return: The data with the formatted data appended.
+        """
+        text = self.get_value(data, source, prop)
+        if not text:
+            return data
+        replacements = settings.get('replacements', None)
+        if not replacements:
+            return data
+        for replacement in replacements:
+            pattern = replacement.get('pattern', None)
+            replacement = replacement.get('replacement', None)
+            if not pattern or not replacement:
+                continue
+            formatted = re.sub(pattern, replacement, text)
+        return self.append_data(data, source, prop+'_formatted', formatted)

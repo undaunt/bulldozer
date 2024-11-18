@@ -2,6 +2,7 @@
 import pillow_avif
 from PIL import Image
 from .utils import spinner, get_metadata_directory, log, archive_metadata, find_case_insensitive_files
+from .utils import copy_file
 
 class PodcastImage:
     def __init__(self, podcast, config):
@@ -72,8 +73,8 @@ class PodcastImage:
                 try:
                     with Image.open(image_file) as img:
                         img.thumbnail((cover_size, cover_size))
-                        img.save(self.podcast.folder_path.parent / f'{self.podcast.name}_cover.jpg', format='JPEG')
-                        log(f"Resized image saved as {self.podcast.name}_cover.jpg", "debug")
+                        img.save(self.podcast.folder_path.parent / f'{self.podcast.folder_path.name}_cover.jpg', format='JPEG')
+                        log(f"Resized image saved as {self.podcast.folder_path.name}_cover.jpg", "debug")
                 except Exception as e:
                     log("Failed to resize image", "error")
                     log(e, "debug")
@@ -107,8 +108,11 @@ class PodcastImage:
         if file_path.exists():
             with spinner(f"Moving image {file_path.name}") as spin:
                 try:
-                    file_path.rename(self.get_meta_file_path())
-                    log(f"Moved image to {self.get_meta_file_path()}", "debug")
+                    new_path = self.get_meta_file_path()
+                    if not new_path.parent.exists():
+                        new_path.parent.mkdir(parents=True)
+                    file_path.rename(new_path)
+                    log(f"Moved image to {new_path}", "debug")
                     self.moved = True
                 except Exception as e:
                     log("Failed to move image", "error")
@@ -118,3 +122,19 @@ class PodcastImage:
                 spin.ok("✔")
                 
         return True
+    
+    def duplicate(self, new_folder):
+        """
+        Duplicate the image file to a new folder.
+
+        :param new_folder: The folder to duplicate the image file to.
+        """
+        file_path = self.get_file_path()
+        
+        if not file_path:
+            log(f"Image {file_path} does not exist - can't duplicate.", "debug")
+            return
+        
+        new_file_path = new_folder / file_path.name
+        copy_file(file_path, new_file_path)
+        log(f"Duplicating image {file_path.name} to {new_file_path}", "debug")
