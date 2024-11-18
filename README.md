@@ -12,7 +12,7 @@ Bulldozer is a script designed to automate the process of downloading, organizin
 - Data fetching from Podnews
 - Automatic RSS censoring for matching premium sources
 - Optional local database with metadata for improved flexibility
-- Option to split active podcasts on current year (database recommended)
+- Option to split active podcasts on current year (database required)
 - Torrent file creation with piece size calculation
 
 ## Requirements
@@ -114,6 +114,7 @@ chmod +x bulldozer
     - podnews.py: Scrapes data from Podnews.
   - cache.py: Handles the caching.
   - data_formatter.py: Methods for transforming data.
+  - database.py: Handles the database logic.
   - dupe_checker.py: Checks for duplicates.
   - file_analyzer.py: Analyzes downloaded files.
   - file_organizer.py: Organizes downloaded files.
