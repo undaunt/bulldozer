@@ -5,6 +5,7 @@ import yaml
 import re
 import shutil
 import fnmatch
+import requests
 from datetime import datetime
 from contextlib import contextmanager
 from pathlib import Path
@@ -465,3 +466,30 @@ def convert_paths_to_strings(data):
         return str(data)
     else:
         return data
+    
+def download_file(url, target_path):
+    """
+    Download a file from a URL.
+
+    :param url: The URL of the file to download.
+    :param target_path: The path to save the file to.
+    :return: True
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive"
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        with target_path.open('wb') as file:
+            file.write(response.content)
+    except requests.exceptions.RequestException as e:
+        log(f"An error occurred while downloading {url}", "error")
+        log(e, "debug")
+        return False
+    
+    return True
