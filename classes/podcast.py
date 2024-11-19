@@ -168,7 +168,6 @@ class Podcast:
         
         files = convert_paths_to_strings(self.analyzer.file_dates)
         self.db.insert_podcast(hash, files)
-        self.db.close()
         log(f"Podcast {self.name} added to the database.", "debug")
 
     def add_metadata_to_database(self):
@@ -181,7 +180,6 @@ class Podcast:
         metadata = self.metadata.data
         external_data = self.metadata.external_data
         self.db.update_podcast(hash, metadata=metadata, external_data=external_data)
-        self.db.close()
         log(f"Podcast {self.name} added to the database.", "debug")
 
     def get_clean_name(self):
