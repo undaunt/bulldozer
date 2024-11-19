@@ -29,7 +29,7 @@ Tags: {{ tags }}
 [i]{%- if podchaser.description_formatted %}{{ podchaser.description_formatted }}{%- else %}{{ podchaser.description }}{%- endif %}[/i]
 
 {% if podchaser.webUrl %}{{ add_link(podchaser.webUrl, 'Official Website') }}{%- endif %}
-{%- if podchaser.rssUrl %} | {{ add_link(podchaser.rssUrl, 'RSS Feed') }}{%- endif %}
+{%- if podchaser.rssUrl %}{%- if podchaser.webUrl %} | {% endif %}{{ add_link(podchaser.rssUrl, 'RSS Feed') }}{%- endif %}
 {%- if podchaser.spotifyId %} | {{ add_link('https://open.spotify.com/show/' ~ podchaser.spotifyId, 'Spotify') }}{%- endif %}
 {%- if podchaser.applePodcastsId %} | {{ add_link('https://podcasts.apple.com/us/podcast/id' ~ podchaser.applePodcastsId, 'Apple Podcasts') }}{%- endif %}
 {%- if podchaser.url %} | {{ add_link(podchaser.url, 'Podchaser') }}{%- endif %}
@@ -43,11 +43,11 @@ Tags: {{ tags }}
 
 {%- if first_episode_date_str %}
 {%- if first_episode_date_str == last_episode_date_str %} -- Date: [b]{{ first_episode_date_str }}[/b]
-{%- else %} -- {% if first_episode_date_str == real_first_episode_date_str -%}Start Date{%- else -%}First Episode Included{%- endif -%}: [b]{{ first_episode_date_str }}[/b]
+{%- else %} -- {% if first_episode_date_str == real_first_episode_date_str -%}Start Date{%- else -%}First Episode Included{%- endif -%}: [b]{{ first_episode_date }}[/b]
 {%- if last_episode_date_str %} -- {% if (not podchaser.status == 'ACTIVE' or completed) %}End Date
 {%- else -%}
 Last Episode Included
-{%- endif -%}: [b]{{ last_episode_date_str }}[/b]
+{%- endif -%}: [b]{{ last_episode_date }}[/b]
 {%- endif %}
 {%- endif %}
 
@@ -111,25 +111,21 @@ First Episode Included
 
 {%- if bitrate_breakdown or differing_bitrates or file_format_breakdown or differing_file_formats %}
 
-{% if bitrate_breakdown %}This upload has files with mixed bitrates.
-[spoiler][code]{{ bitrate_breakdown }}[/code][/spoiler]
+{% if bitrate_breakdown %}This upload has files with mixed bitrates.[spoiler][code]{{ bitrate_breakdown }}[/code][/spoiler]
 {%- endif %}
-{%- if differing_bitrates %}These files are not {{ overall_bitrate }}:
-[spoiler][code]{{ differing_bitrates }}[/code][/spoiler]
+{%- if differing_bitrates %}These files are not {{ overall_bitrate }}:[spoiler][code]{{ differing_bitrates }}[/code][/spoiler]
 {%- endif %}
 {%- if file_format_breakdown %}
 {%- if bitrate_breakdown or differing_bitrates %}
 
 {%- endif -%}
-This upload has files in mixed file formats.
-[spoiler][code]{{ file_format_breakdown }}[/code][/spoiler]
+This upload has files in mixed file formats.[spoiler][code]{{ file_format_breakdown }}[/code][/spoiler]
 {%- endif %}
 {%- if differing_file_formats %}
 {%- if bitrate_breakdown or differing_bitrates %}
 
 {%- endif -%}
-These files are not {{ file_format }}:
-[spoiler][code]{{ differing_file_formats }}[/code][/spoiler]
+These files are not {{ file_format }}:[spoiler][code]{{ differing_file_formats }}[/code][/spoiler]
 {%- endif %}
 {%- endif %}
 {%- endif %}

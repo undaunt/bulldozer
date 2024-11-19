@@ -343,14 +343,33 @@ class Rss:
         
         try:
             namespaces = {node[0]: node[1] for _, node in ET.iterparse(self.get_file_path(), events=['start-ns'])}
+        
             tree = ET.parse(self.get_file_path())
             root = tree.getroot()
+            log(f"Detected namespaces: {namespaces}", "debug")
+        
+            for prefix, uri in namespaces.items():
+                ns_path = f'./channel/{{{uri}}}image'
+                image = root.find(ns_path)
+                if image is not None:
+                    log(f"Image element found using namespace '{prefix}': {uri}", "debug")
+                    return image.attrib.get('href')
 
-            image = root.find('./channel/ns0:image', namespaces)
-
-            if image is not None:
+            # Second attempt: Look for <image> tag without namespace
+            image = root.find('./channel/image')
+            if image is not None and 'href' in image.attrib:
+                log("Image element found without namespace", "debug")
                 return image.attrib.get('href')
+
+            # Fallback: Look for <image><url> structure
+            image = root.find('./channel/image')
+            if image is not None:
+                url = image.find('url')
+                if url is not None and url.text:
+                    log("Image URL found in <image><url> structure", "debug")
+                    return url.text.strip()
             
+            log("No image element found in RSS feed", "warning")
             return None
         except ET.ParseError as e:
             log(f"Error parsing RSS feed", "error")

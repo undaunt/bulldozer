@@ -257,6 +257,7 @@ force_titlecase:
   - '^At$'
   - '^In$'
   - '^The$'
+  - '^To$'
 
 # When renaming files, anything matching these patterns will be left untouched
 skip_capitalization:
