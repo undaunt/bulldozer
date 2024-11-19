@@ -121,6 +121,10 @@ class Report:
             data = {
                 "start_year_str": start_year_str,
                 "end_year_str": end_year_string,
+                "first_episode_date": self.podcast.analyzer.first_episode_date,
+                "real_first_episode_date": self.podcast.analyzer.real_first_episode_date,
+                "last_episode_date": self.podcast.analyzer.last_episode_date,
+                "real_last_episode_date": self.podcast.analyzer.real_last_episode_date,
                 "first_episode_date_str": first_episode_date_str,
                 "real_first_episode_date_str": real_first_episode_date_str,
                 "last_episode_date_str": last_episode_date_str,

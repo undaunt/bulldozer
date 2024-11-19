@@ -43,11 +43,11 @@ Tags: {{ tags }}
 
 {%- if first_episode_date_str %}
 {%- if first_episode_date_str == last_episode_date_str %} -- Date: [b]{{ first_episode_date_str }}[/b]
-{%- else %} -- {% if first_episode_date_str == real_first_episode_date_str -%}Start Date{%- else -%}First Episode Included{%- endif -%}: [b]{{ first_episode_date_str }}[/b]
+{%- else %} -- {% if first_episode_date_str == real_first_episode_date_str -%}Start Date{%- else -%}First Episode Included{%- endif -%}: [b]{{ first_episode_date }}[/b]
 {%- if last_episode_date_str %} -- {% if (not podchaser.status == 'ACTIVE' or completed) %}End Date
 {%- else -%}
 Last Episode Included
-{%- endif -%}: [b]{{ last_episode_date_str }}[/b]
+{%- endif -%}: [b]{{ last_episode_date }}[/b]
 {%- endif %}
 {%- endif %}
 
