@@ -172,7 +172,7 @@ class Rss:
             for item in items:
                 title_element = item.find('title')
                 if title_element is not None:
-                    if self.podcast.match_titles not in title_element.text:
+                    if self.podcast.match_titles.lower() not in title_element.text.lower():
                         channel.remove(item)
         with self.get_file_path().open('w') as rss_file:
             rss_file.write(ET.tostring(root, encoding='utf-8').decode('utf-8'))
