@@ -77,6 +77,7 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
             podcast.add_metadata_to_database()
         report.generate()
     if report_only:
+        podcast.db.close()
         return
     podcast.archive_files()
 
@@ -84,7 +85,7 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     base_dir = config.get("base_dir", None)
     tracker_source = config.get("tracker_source", None)
     create_torrent(podcast, announce_url, base_dir, tracker_source)
-
+    podcast.db.close()
     announce(f"All done, enjoy!", "celebrate")
 
 def check_files(input):
