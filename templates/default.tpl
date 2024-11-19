@@ -43,12 +43,7 @@ Tags: {{ tags }}
 
 {%- if first_episode_date_str %}
 {%- if first_episode_date_str == last_episode_date_str %} -- Date: [b]{{ first_episode_date_str }}[/b]
-{%- else %} -- 
-{%- if first_episode_date_str == real_first_episode_date_str -%}
-Start Date
-{%- else -%}
-First Episode Included
-{%- endif -%}: [b]{{ first_episode_date_str }}[/b]
+{%- else %} -- {% if first_episode_date_str == real_first_episode_date_str -%}Start Date{%- else -%}First Episode Included{%- endif -%}: [b]{{ first_episode_date_str }}[/b]
 {%- if last_episode_date_str %} -- {% if (not podchaser.status == 'ACTIVE' or completed) %}End Date
 {%- else -%}
 Last Episode Included
@@ -139,7 +134,7 @@ These files are not {{ file_format }}:
 {%- endif %}
 {%- endif %}
 
-[size=10]Powered by [url=https://unwalled.cc/wikis/16]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
+[size=10]Powered by [url=https://github.com/lewler/bulldozer]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
 [/center]
 
 --- Torrent Description ---
