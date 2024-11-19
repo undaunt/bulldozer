@@ -323,7 +323,7 @@ class FileOrganizer:
         date_format_short = self.config.get('date_format_short', '%Y-%m-%d')
         date_format_long = self.config.get('date_format_long', '%B %d %Y')
         start_year_str = str(self.podcast.analyzer.earliest_year) if self.podcast.analyzer.earliest_year else "Unknown"
-        real_start_year_str = str(self.podcast.analyzer.real_first_episode_date) if self.podcast.analyzer.real_first_episode_date else "Unknown"
+        real_start_year_str = str(self.podcast.analyzer.real_first_episode_date)[:4] if self.podcast.analyzer.real_first_episode_date else "Unknown"
         first_episode_date_str = format_last_date(self.podcast.analyzer.first_episode_date, date_format_long) if self.podcast.analyzer.first_episode_date else "Unknown"
         last_episode_date_str = format_last_date(self.podcast.analyzer.last_episode_date, date_format_long) if self.podcast.analyzer.last_episode_date else "Unknown"
         last_episode_date_dt = datetime.strptime(self.podcast.analyzer.last_episode_date, date_format_short) if self.podcast.analyzer.last_episode_date != "Unknown" else None

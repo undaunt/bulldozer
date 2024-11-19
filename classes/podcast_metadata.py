@@ -66,7 +66,7 @@ class PodcastMetadata:
             log(f"Invalid JSON in file '{file_path.name}'.", "error")
             log(json.JSONDecodeError.msg, "debug")
             status = False
-        self.fetch_additional_data()
+        self.fetch_additional_data(search_term)
         return status
     
     def check_if_podcast_is_complete(self):
