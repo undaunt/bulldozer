@@ -12,7 +12,7 @@ from .utils import log, run_command, announce, spinner, get_metadata_directory, 
 from .database import Database
 
 class Podcast:
-    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None):
+    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None, match_titles=None):
         """
         Initialize the Podcast with the name, folder path, configuration, and source RSS file.
 
@@ -23,6 +23,7 @@ class Podcast:
         :param censor_rss: If True, the RSS feed will be censored.
         :param check_duplicates: If True, check for duplicate episodes.
         :param search_term: The search term used to find the podcast.
+        :param match_titles: The titles to match when checking for duplicates.
 
         The Podcast class is responsible for handling the podcast.
         """
@@ -33,9 +34,10 @@ class Podcast:
         self.config = config
         self.completed = False
         self.downloaded = False
-        if self.name != 'unknown podcast':
+        if not source_rss_file:
             self.downloaded = True
         self.search_term = search_term
+        self.match_titles = match_titles
         self.rss = Rss(self, source_rss_file, self.config, censor_rss)
         self.image = PodcastImage(self, self.config)
         self.metadata = PodcastMetadata(self, self.config)
@@ -58,14 +60,12 @@ class Podcast:
         elif not metadata:
             return metadata
 
-        self.name = self.rss.metadata['name']
+        if self.name == 'unknown podcast':
+            self.name = self.rss.metadata['name']
 
     def download_episodes(self):
         """
         Download the podcast episodes using podcast-dl.
-
-        :param episode_template: The template for the episode file names.
-        :param threads: The number of threads to use for downloading.
         """
         self.get_metadata()
         self.check_for_duplicates()
