@@ -2,7 +2,7 @@
 import pillow_avif
 from PIL import Image
 from .utils import spinner, get_metadata_directory, log, archive_metadata, find_case_insensitive_files
-from .utils import copy_file
+from .utils import copy_file, download_file
 
 class PodcastImage:
     def __init__(self, podcast, config):
@@ -91,8 +91,14 @@ class PodcastImage:
         file_path = self.get_file_path()
 
         if not file_path:
-            log(f"Image {file_path} does not exist.", "debug")
-            return
+            log(f"Image does not exist, trying to get it from the RSS", "debug")
+            if not self.get_image_from_rss():
+                log("Failed to get image from RSS", "debug")
+                return
+            file_path = self.get_file_path()
+            if not file_path:
+                log("Something went wrong getting the image from the RSS", "debug")
+                return
         
         if self.archive:
             log(f"Archiving image {file_path.name}", "debug")
@@ -138,3 +144,42 @@ class PodcastImage:
         new_file_path = new_folder / file_path.name
         copy_file(file_path, new_file_path)
         log(f"Duplicating image {file_path.name} to {new_file_path}", "debug")
+
+    def get_image_from_rss(self):
+        """
+        Get the image from the RSS feed.
+
+        :return: The image from the RSS feed.
+        """
+        if self.get_file_path():
+            log("Image already exists in the podcast folder", "debug")
+            return False
+        
+        image_url = self.podcast.rss.get_image_url()
+        if not image_url:
+            log("No image found in the RSS feed", "debug")
+            return
+        
+        with spinner("Downloading image from RSS") as spin:
+            status = self.download_image(image_url, self.podcast.folder_path / f'{self.podcast.name}.image.jpg')
+            if status:
+                spin.ok("✔")
+            else:
+                spin.fail("✖")
+                return False
+            
+        return True
+            
+    def download_image(self, image_url, target_path):
+        """
+        Download an image from a URL.
+
+        :param image_url: The URL of the image to download.
+        """
+        status = download_file(image_url, target_path)
+        if status:
+            log(f"Downloaded image to {target_path}", "debug")
+        else:
+            return False
+        
+        return True        
