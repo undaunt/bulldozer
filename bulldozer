@@ -12,7 +12,7 @@ from classes.report import Report
 
 config = load_config()
 
-def main(input, censor_rss, report_only=False, search_term=None, download_only=False, refresh=False):
+def main(input, censor_rss, report_only=False, search_term=None, download_only=False, refresh=False, name=None, match_titles=None):
     """
     Main function to run the bulldozer script
 
@@ -20,20 +20,25 @@ def main(input, censor_rss, report_only=False, search_term=None, download_only=F
     :param censor_rss: Whether to censor the RSS feed or not
     """
     global config
-    print("· • —– ++ ---| Bulldozer v0.6.0 |--- ++ —– • ·")
+    print("· • —– ++ ---| Bulldozer v0.6.1 |--- ++ —– • ·")
     database_active = config.get("database", {}).get("active", True)
 
     if os.path.isdir(input):
         folder_path = Path(input)
-        name = folder_path.name
+        if not name:
+            name = folder_path.name
         check_duplicates = not report_only
         podcast = Podcast(name, folder_path, config, censor_rss=censor_rss, check_duplicates=check_duplicates, search_term=search_term)
     else:
         source_rss_file = input
         output_dir = config.get("output_dir", ".")
-        temp_dir = Path(output_dir) / 'download_temp'
+        if not name:
+            name = "unknown podcast"
+            temp_dir = Path(output_dir) / 'download_temp'
+        else:
+            temp_dir = Path(output_dir) / f"{name}"
         temp_dir.mkdir(parents=True, exist_ok=True)
-        podcast = Podcast("unknown podcast", temp_dir, config, source_rss_file, censor_rss, True, search_term)
+        podcast = Podcast(name, temp_dir, config, source_rss_file, censor_rss, True, search_term, match_titles)
         podcast.download_episodes()
         name = podcast.name
         folder_path = temp_dir
@@ -162,6 +167,8 @@ if __name__ == "__main__":
     parser.add_argument("--check-config", action="store_true", help="Check that user config is valid")
     parser.add_argument("--log-level", type=str, help="Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--search-term", type=str, help="Search term to use when querying APIs")
+    parser.add_argument("--name", type=str, help="Override the name to use for the podcast")
+    parser.add_argument("--match-titles", type=str, help="Only includes the episodes with titles matching the given string")
     args = parser.parse_args()
 
     if not config:
@@ -181,4 +188,4 @@ if __name__ == "__main__":
     elif args.check_config:
         check_config()
     else:
-        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only, args.refresh)
+        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only, args.refresh, args.name, args.match_titles)
