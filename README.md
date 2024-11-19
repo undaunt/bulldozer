@@ -13,6 +13,7 @@ Bulldozer is a script designed to automate the process of downloading, organizin
 - Automatic RSS censoring for matching premium sources
 - Optional local database with metadata for improved flexibility
 - Option to split active podcasts on current year (database required)
+- Partial download of feed using --match-titles
 - Torrent file creation with piece size calculation
 
 ## Requirements
@@ -102,6 +103,8 @@ chmod +x bulldozer
 - `--check-config`: Check if user config is valid.
 - `--log-level`: Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL).
 - `--search-term`: Use <input> as search term instead of podcast name.
+- `--name`: Use <input> as the podcast name.
+- `--match-titles`: Will only keep episodes matching <input> in the feed.
 
 ## Project Structure
 
