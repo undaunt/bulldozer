@@ -108,16 +108,17 @@ class FileAnalyzer:
             if self.earliest_year is None or (year and year < self.earliest_year):
                 self.earliest_year = year
             if self.first_episode_date is None or date_str < self.first_episode_date:
-                self.first_episode_date = date_str
+                self.real_first_episode_date = self.first_episode_date = date_str
             if self.last_episode_date is None or date_str > self.last_episode_date:
-                self.last_episode_date = date_str
+                self.real_last_episode_date = self.last_episode_date = date_str
 
-        for date_str in self.original_files.keys():
-            year = int(str(date_str)[:4])
-            if self.real_first_episode_date is None or (date_str and date_str < self.real_first_episode_date):
-                self.real_first_episode_date = date_str
-            if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
-                self.real_last_episode_date = date_str
+        if self.original_files:
+            for date_str in self.original_files.keys():
+                year = int(str(date_str)[:4])
+                if self.real_first_episode_date is None or (date_str and date_str < self.real_first_episode_date):
+                    self.real_first_episode_date = date_str
+                if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
+                    self.real_last_episode_date = date_str
 
     def process_metadata(self, metadata, file_path):
         """
