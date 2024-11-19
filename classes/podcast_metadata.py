@@ -55,7 +55,6 @@ class PodcastMetadata:
         if not file_path:
             log(f"Metadata file for {self.podcast.name} does not exist.", "debug")
             return None
-        self.check_if_podcast_is_complete()
         status = None
         try:
             with file_path.open() as f:
@@ -67,6 +66,7 @@ class PodcastMetadata:
             log(json.JSONDecodeError.msg, "debug")
             status = False
         self.fetch_additional_data(search_term)
+        self.check_if_podcast_is_complete()
         return status
     
     def check_if_podcast_is_complete(self):
@@ -79,7 +79,7 @@ class PodcastMetadata:
         if self.external_data.get('podchaser', {}).get('status', 'ACTIVE') != 'ACTIVE':
             self.podcast.completed = True
             return
-
+        
         self.podcast.completed = False
         
     def format_data(self):
