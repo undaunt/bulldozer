@@ -1,12 +1,11 @@
 # rss.py
-import requests
 import re
 import os
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from titlecase import titlecase
-from .utils import spinner, get_metadata_directory, log, find_case_insensitive_files, copy_file
+from .utils import spinner, get_metadata_directory, log, find_case_insensitive_files, copy_file, download_file
 from .utils import special_capitalization, archive_metadata, ask_yes_no, announce, perform_replacements
 
 class Rss:
@@ -89,6 +88,9 @@ class Rss:
         Rename the RSS file to the podcast name.
         """
         old_file_path = get_metadata_directory(self.podcast.folder_path, self.config) / f'podcast.rss'
+        if not old_file_path.exists():
+            log(f"RSS file {old_file_path} does not exist, can't rename", "error")
+            return
         new_file_path = get_metadata_directory(self.podcast.folder_path, self.config) / f'{self.podcast.name}.rss'
         log(f"Renaming RSS file from {old_file_path} to {new_file_path}", "debug")
         old_file_path.rename(new_file_path)
@@ -113,21 +115,23 @@ class Rss:
                 log("Failed to extract name from RSS feed", "critical")
                 exit(1)
 
-            new_folder_path = self.podcast.folder_path.parent / f'{self.metadata['name']}'
-            if new_folder_path.exists():
-                spin.fail("✖")
-                log(f"Folder {new_folder_path} already exists", "critical")
-                if not ask_yes_no("Folder already exists, do you want to overwrite it?"):
-                    announce("Exiting, cya later!", "info")
-                    exit(1)
+            if self.podcast.name == 'unknown podcast':
+                new_folder_path = self.podcast.folder_path.parent / f'{self.metadata['name']}'
+                if new_folder_path.exists():
+                    spin.fail("✖")
+                    log(f"Folder {new_folder_path} already exists", "critical")
+                    if not ask_yes_no("Folder already exists, do you want to overwrite it?"):
+                        announce("Exiting, cya later!", "info")
+                        exit(1)
 
-                shutil.rmtree(new_folder_path)
+                    shutil.rmtree(new_folder_path)
 
-            self.podcast.folder_path.rename(new_folder_path)
-            log(f"Folder renamed to {new_folder_path}", "debug")
-            self.podcast.folder_path = new_folder_path
-            self.podcast.name = self.metadata['name']
-            self.rename()
+                self.podcast.folder_path.rename(new_folder_path)
+                log(f"Folder renamed to {new_folder_path}", "debug")
+                self.podcast.folder_path = new_folder_path
+                self.podcast.name = self.metadata['name']
+                self.rename()
+            
             self.metadata['total_episodes'] = self.get_episode_count_from()
             self.check_for_premium_show()
             spin.ok("✔")
@@ -139,34 +143,48 @@ class Rss:
         Download the RSS feed file.
         """
         with spinner("Downloading RSS feed") as spin:
-            try:
-                # Add headers to mimic a browser
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Accept-Encoding": "gzip, deflate, br",
-                    "Connection": "keep-alive"
-                }
-                response = requests.get(self.source_rss_file, headers=headers)
-                response.raise_for_status()
-                with self.default_file_path().open('wb') as rss_file:
-                    rss_file.write(response.content)
+            result = download_file(self.source_rss_file, self.default_file_path())
+            if result:
                 log(f"RSS feed downloaded to {self.default_file_path()}", "debug")
                 spin.ok("✔")
-            except requests.RequestException as e:
+            else:
                 spin.fail("✘")
-                log(f"Failed to download RSS feed", "critical")
-                log(e, "debug")
-                raise
+
+    def check_titles(self):
+        """
+        Check if the episode titles match self.podcast.match_titles
+        Only keep the episodes that match the titles.
+        """
+        if not self.get_file_path():
+            log("RSS file does not exist, can't check for episode titles", "error")
+            return
+
+        if not self.podcast.match_titles:
+            log("No string to match provided, not removing any episodes", "debug")
+            return
+
+        log(f"Removing episodes that don't match: {self.podcast.match_titles}", "debug")
+        tree = ET.parse(self.get_file_path())
+        root = tree.getroot()
+        channel = root.find('channel')
+        if channel is not None:
+            items = channel.findall('item')
+            for item in items:
+                title_element = item.find('title')
+                if title_element is not None:
+                    if self.podcast.match_titles not in title_element.text:
+                        channel.remove(item)
+        with self.get_file_path().open('w') as rss_file:
+            rss_file.write(ET.tostring(root, encoding='utf-8').decode('utf-8'))
     
     def load_local_file(self):
         """
         Load the local RSS feed file.
         """
         if self.keep_source_rss:
-            shutil.copy(self.source_rss_file, self.get_file_path())
+            shutil.copy(self.source_rss_file, self.default_file_path())
         else:
-            self.source_rss_file.rename(self.get_file_path())
+            self.source_rss_file.rename(self.default_file_path())
             self.source_rss_file = None
 
     def get_file(self):
@@ -183,6 +201,8 @@ class Rss:
             self.load_local_file()
         else:
             self.download_file()
+
+        self.check_titles()
     
     def edit_rss_feed(self):
         """
@@ -260,7 +280,7 @@ class Rss:
                     log(f"Invalid premium network configuration: {network}", "debug")
                     continue
                 tag = channel.find(network['tag'])
-                if tag is not None:
+                if tag is not None and tag.text:
                     if network['text'] in tag.text:
                         log(f"Identified premium network {network['name']} from RSS feed", "debug")
                         self.censor_rss = True
@@ -315,3 +335,24 @@ class Rss:
             new_file_path.parent.mkdir(parents=True, exist_ok=True)
         copy_file(file_path, new_file_path)
         log(f"Duplicating RSS feed {file_path} to {new_file_path}", "debug")
+
+    def get_image_url(self):
+        if not self.get_file_path():
+            log("RSS file does not exist, can't get image url", "warning")
+            return None
+        
+        try:
+            namespaces = {node[0]: node[1] for _, node in ET.iterparse(self.get_file_path(), events=['start-ns'])}
+            tree = ET.parse(self.get_file_path())
+            root = tree.getroot()
+
+            image = root.find('./channel/ns0:image', namespaces)
+
+            if image is not None:
+                return image.attrib.get('href')
+            
+            return None
+        except ET.ParseError as e:
+            log(f"Error parsing RSS feed", "error")
+            log(e, "debug")
+            return None
