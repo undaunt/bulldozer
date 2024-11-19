@@ -134,7 +134,7 @@ These files are not {{ file_format }}:
 {%- endif %}
 {%- endif %}
 
-[size=10]Powered by [url=https://unwalled.cc/wikis/16]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
+[size=10]Powered by [url=https://github.com/lewler/bulldozer]Bulldozer[/url] - Breaking Down Walls™ Since 2024[/size]
 [/center]
 
 --- Torrent Description ---
