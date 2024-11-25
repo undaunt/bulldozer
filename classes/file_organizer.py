@@ -1,8 +1,11 @@
 # file_organizer.py
 import fnmatch
+import mutagen
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from mutagen.easyid3 import EasyID3
+from mutagen.mp4 import MP4
 from .utils import spinner, titlecase_filename, announce, log, perform_replacements
 from .utils import format_last_date, ask_yes_no, take_input, normalize_string
 
@@ -81,6 +84,76 @@ class FileOrganizer:
         file_path = new_path
 
         return self.fix_episode_numbering(file_path, ep_nr_at_end_file_pattern)
+
+    def update_file_metadata(self):
+        """
+        Update metadata fields in audio files based on the 'file_metadata_replacements' configuration.
+        """
+        replacements = self.config.get('file_metadata_replacements', [])
+
+        for file_path in Path(self.podcast.folder_path).rglob('*'):
+            if file_path.suffix.lower() in ['.mp3', '.m4a']:
+                try:
+                    if file_path.suffix.lower() == '.mp3':
+                        audio = EasyID3(file_path)
+                    elif file_path.suffix.lower() == '.m4a':
+                        audio = MP4(file_path)
+                    else:
+                        continue  # Skip unsupported formats
+
+                    metadata_changed = False
+
+                    for replacement in replacements:
+                        fields = replacement.get('fields', [])
+                        pattern = replacement.get('pattern', None)
+                        repl = replacement.get('replacement', '')
+                        flags = replacement.get('flags', [])
+                        regex_flags = 0
+                        flag_mapping = {
+                            'IGNORECASE': re.IGNORECASE,
+                            'MULTILINE': re.MULTILINE,
+                            'DOTALL': re.DOTALL,
+                            'VERBOSE': re.VERBOSE,
+                            'ASCII': re.ASCII,
+                        }
+                        for flag in flags:
+                            regex_flags |= flag_mapping.get(flag.upper(), 0)
+
+                        for field in fields:
+                            # Handle MP3 files
+                            if file_path.suffix.lower() == '.mp3':
+                                if field in audio:
+                                    original_value = audio[field][0]
+                                    new_value = re.sub(pattern, repl, original_value, flags=regex_flags).strip()
+                                    if new_value != original_value:
+                                        audio[field] = new_value
+                                        metadata_changed = True
+                                        log(f"Updated '{field}' metadata in '{file_path.name}' from '{original_value}' to '{new_value}'", "debug")
+                            # Handle M4A files
+                            elif file_path.suffix.lower() == '.m4a':
+                                tag_map = {
+                                    'title': '\xa9nam',
+                                    'artist': '\xa9ART',
+                                    'album': '\xa9alb',
+                                    'genre': '\xa9gen',
+                                    'date': '\xa9day',
+                                    'comment': '\xa9cmt',
+                                    'composer': '\xa9wrt',
+                                    'albumartist': 'aART',
+                                }
+                                mp4_field = tag_map.get(field.lower())
+                                if mp4_field and mp4_field in audio.tags:
+                                    original_value = audio.tags[mp4_field][0]
+                                    new_value = re.sub(pattern, repl, original_value, flags=regex_flags).strip()
+                                    if new_value != original_value:
+                                        audio.tags[mp4_field] = [new_value]
+                                        metadata_changed = True
+                                        log(f"Updated '{field}' metadata in '{file_path.name}' from '{original_value}' to '{new_value}'", "debug")
+
+                    if metadata_changed:
+                        audio.save()
+                except Exception as e:
+                    log(f"Error processing file '{file_path.name}': {e}", "error")
 
     def find_unwanted_files(self):
         """
@@ -313,6 +386,7 @@ class FileOrganizer:
 
         self.find_unwanted_files()
         self.check_numbering()
+        self.update_file_metadata()
 
     def rename_folder(self):
         """
