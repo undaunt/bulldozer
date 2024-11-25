@@ -183,6 +183,14 @@ file_replacements:
   - pattern: '\s+(?=\.)'
     replacement: ''
 
+# The replacements to make in the file level metadata fields
+file_metadata_replacements:
+  - fields: ['album', 'title']
+    pattern: '\s*\(.*?John Doe.*?\)'
+    replacement: ''
+    flags:
+      - IGNORECASE
+
 # The replacements to make in the description
 description_replacements:
   - pattern: '<br>'
