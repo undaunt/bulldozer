@@ -1,6 +1,9 @@
 # file_analyzer.py
 import mutagen
+import re
 from collections import defaultdict
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.mp3 import BitrateMode
@@ -93,8 +96,6 @@ class FileAnalyzer:
     def get_date_range(self):
         """
         Get the date range of the audio files.
-        
-        :return: The date range as a tuple of the earliest and latest dates.
         """
         self.file_dates = {k: v for k, v in self.file_dates.items() if v}
         self.earliest_year = None
@@ -104,43 +105,100 @@ class FileAnalyzer:
         self.real_last_episode_date = None
 
         for date_str in self.file_dates.keys():
-            year = int(str(date_str)[:4])
-            if self.earliest_year is None or (year and year < self.earliest_year):
-                self.earliest_year = year
-            if self.first_episode_date is None or date_str < self.first_episode_date:
-                self.real_first_episode_date = self.first_episode_date = date_str
-            if self.last_episode_date is None or date_str > self.last_episode_date:
-                self.real_last_episode_date = self.last_episode_date = date_str
+            if date_str != "Unknown":
+                try:
+                    year = int(str(date_str)[:4])
+                except ValueError:
+                    log(f"Invalid date string '{date_str}' encountered.", "warning")
+                    continue
 
+                if self.earliest_year is None or (year and year < self.earliest_year):
+                    self.earliest_year = year
+                if self.first_episode_date is None or date_str < self.first_episode_date:
+                    self.real_first_episode_date = self.first_episode_date = date_str
+                if self.last_episode_date is None or date_str > self.last_episode_date:
+                    self.real_last_episode_date = self.last_episode_date = date_str
+            else:
+                # Handle files with unknown dates separately if needed
+                log(f"Encountered file with unknown date.", "warning")
+                continue
+
+        # If we have original files (from previous runs), update real first and last dates
         if self.original_files:
             for date_str in self.original_files.keys():
-                year = int(str(date_str)[:4])
-                if self.real_first_episode_date is None or (date_str and date_str < self.real_first_episode_date):
-                    self.real_first_episode_date = date_str
-                if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
-                    self.real_last_episode_date = date_str
+                if date_str != "Unknown":
+                    if self.real_first_episode_date is None or (date_str and date_str < self.real_first_episode_date):
+                        self.real_first_episode_date = date_str
+                    if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
+                        self.real_last_episode_date = date_str
 
     def process_metadata(self, metadata, file_path):
         """
         Process the metadata of an audio file.
-        
+
         :param metadata: The metadata of the audio file.
         :param file_path: The path to the audio file.
         """
         recording_date = metadata.get('recording_date')
-        if recording_date:
-            year = int(str(recording_date)[:4])
-            date_str = str(recording_date)
-        else:
-            log(f"Failed to get recording date for: {file_path}", "error")
-            year = None
-            date_str = "Unknown"
+        date_str = "Unknown"
+        year = None
 
+        if recording_date:
+            date_str_raw = str(recording_date)
+            parsed = False
+
+            # Try ISO 8601 format first
+            try:
+                date_obj = datetime.strptime(date_str_raw, '%Y-%m-%d')
+                parsed = True
+            except ValueError:
+                pass
+
+            # If ISO 8601 parsing fails, try RFC 2822 format
+            if not parsed:
+                try:
+                    date_obj = parsedate_to_datetime(date_str_raw)
+                    parsed = True
+                except (TypeError, ValueError, IndexError):
+                    pass
+
+            # If parsing succeeds, extract the year and formatted date string
+            if parsed:
+                year = date_obj.year
+                date_str = date_obj.strftime('%Y-%m-%d')
+            else:
+                log(f"Invalid recording date format for file {file_path}: '{date_str_raw}'", "warning")
+                date_str = "Unknown"
+        else:
+            # Try to extract date from file name
+            date_pattern = re.compile(r'\b(\d{4}-\d{2}-\d{2})\b')
+            match = date_pattern.search(file_path.name)
+            if match:
+                date_str = match.group(1)
+                try:
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    year = date_obj.year
+                except ValueError:
+                    log(f"Invalid date in file name for file {file_path}: '{date_str}'", "warning")
+                    date_str = "Unknown"
+            else:
+                # Use file modification date as a last resort
+                try:
+                    timestamp = file_path.stat().st_mtime
+                    date_obj = datetime.fromtimestamp(timestamp)
+                    date_str = date_obj.strftime('%Y-%m-%d')
+                    year = date_obj.year
+                    log(f"Using file modification date for {file_path}: '{date_str}'", "info")
+                except Exception as e:
+                    log(f"Failed to get file modification date for {file_path}: {e}", "error")
+                    date_str = "Unknown"
+
+        # Continue processing even if date is unknown
         self.file_dates[date_str].append(file_path)
 
-        bitrate = metadata['bitrate']
-        bitrate_mode = metadata['bitrate_mode']
-        bitrate_str = "VBR" if "vbr" in bitrate_mode.lower() else f"{bitrate} kbps"
+        bitrate = metadata.get('bitrate', None)
+        bitrate_mode = metadata.get('bitrate_mode', 'Unknown')
+        bitrate_str = "VBR" if "vbr" in bitrate_mode.lower() else f"{bitrate} kbps" if bitrate else "Unknown"
         self.bitrates[bitrate_str].append(file_path)
 
         file_format = file_path.suffix.lower()[1:]
