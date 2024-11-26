@@ -77,7 +77,11 @@ class FileAnalyzer:
 
         metadata = {}
         if isinstance(audiofile, MP3):
-            metadata['recording_date'] = audiofile.get("TDRC")
+            tdrc = audiofile.get("TDRC")
+            if tdrc:
+                metadata['recording_date'] = tdrc.text[0]  # Extract the text value
+            else:
+                metadata['recording_date'] = None
             metadata['bitrate'] = round(audiofile.info.bitrate / 1000)
             metadata['bitrate_mode'] = "VBR" if audiofile.info.bitrate_mode == BitrateMode.VBR else "CBR"
         elif isinstance(audiofile, MP4):
@@ -132,42 +136,63 @@ class FileAnalyzer:
                     if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
                         self.real_last_episode_date = date_str
 
-    def process_metadata(self, metadata, file_path):
-        """
-        Process the metadata of an audio file.
+        def process_metadata(self, metadata, file_path):
+            """
+            Process the metadata of an audio file.
 
-        :param metadata: The metadata of the audio file.
-        :param file_path: The path to the audio file.
-        """
-        recording_date = metadata.get('recording_date')
-        date_str = "Unknown"
-        year = None
-
+            :param metadata: The metadata of the audio file.
+            :param file_path: The path to the audio file.
+            """
         if recording_date:
             date_str_raw = str(recording_date)
             parsed = False
+            date_obj = None
 
-            # Try ISO 8601 format first
-            try:
-                date_obj = datetime.strptime(date_str_raw, '%Y-%m-%d')
-                parsed = True
-            except ValueError:
-                pass
+            # Add debug logging
+            log(f"Processing recording_date: '{date_str_raw}' for file '{file_path.name}'", "debug")
 
-            # If ISO 8601 parsing fails, try RFC 2822 format
+            # Define possible date formats
+            date_formats = [
+                '%Y-%m-%d',
+                '%Y',
+                '%a, %d %b %Y %H:%M:%S %z',    # 'Thu, 02 Nov 2023 16:31:53 -0000'
+                '%a, %d %b %Y %H:%M:%S %Z',
+                '%d %b %Y %H:%M:%S %z',
+                '%d %b %Y %H:%M:%S %Z',
+            ]
+
+            # Try parsing with the defined formats
+            for fmt in date_formats:
+                try:
+                    date_obj = datetime.strptime(date_str_raw, fmt)
+                    parsed = True
+                    break
+                except ValueError:
+                    continue
+
             if not parsed:
                 try:
+                    # Use dateutil.parser.parse for flexible parsing
+                    from dateutil.parser import parse
+                    date_obj = parse(date_str_raw)
+                    parsed = True
+                except (ImportError, ValueError):
+                    pass
+
+            if not parsed:
+                try:
+                    # Fallback to parsedate_to_datetime
                     date_obj = parsedate_to_datetime(date_str_raw)
                     parsed = True
                 except (TypeError, ValueError, IndexError):
                     pass
 
-            # If parsing succeeds, extract the year and formatted date string
-            if parsed:
+            if parsed and date_obj:
                 year = date_obj.year
                 date_str = date_obj.strftime('%Y-%m-%d')
+                log(f"Parsed date: '{date_str}'", "debug")
             else:
-                log(f"Invalid recording date format for file {file_path}: '{date_str_raw}'", "warning")
+                log(f"Invalid recording date format for file '{file_path.name}': '{date_str_raw}'", "warning")
                 date_str = "Unknown"
         else:
             # Try to extract date from file name
