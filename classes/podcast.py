@@ -12,7 +12,7 @@ from .utils import log, run_command, announce, spinner, get_metadata_directory, 
 from .database import Database
 
 class Podcast:
-    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None, match_titles=None):
+    def __init__(self, name, folder_path, config, source_rss_file=None, censor_rss=False, check_duplicates=True, search_term=None, match_titles=None, rss_url=None):
         """
         Initialize the Podcast with the name, folder path, configuration, and source RSS file.
 
@@ -38,7 +38,10 @@ class Podcast:
             self.downloaded = True
         self.search_term = search_term
         self.match_titles = match_titles
-        self.rss = Rss(self, source_rss_file, self.config, censor_rss)
+        self.rss_url = rss_url
+        self.source_rss_file = source_rss_file
+        self.censor_rss = censor_rss
+        self.rss = Rss(self, self.config, rss_url=self.rss_url, source_rss_file=self.source_rss_file, censor_rss=self.censor_rss)
         self.image = PodcastImage(self, self.config)
         self.metadata = PodcastMetadata(self, self.config)
         self.analyzer = FileAnalyzer(self, config)

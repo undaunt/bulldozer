@@ -12,7 +12,7 @@ from classes.report import Report
 
 config = load_config()
 
-def main(input, censor_rss, report_only=False, search_term=None, download_only=False, refresh=False, name=None, match_titles=None):
+def main(input, censor_rss, report_only=False, search_term=None, download_only=False, refresh=False, name=None, match_titles=None, rss_url=None):
     """
     Main function to run the bulldozer script
 
@@ -169,6 +169,7 @@ if __name__ == "__main__":
     parser.add_argument("--log-level", type=str, help="Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--search-term", type=str, help="Search term to use when querying APIs")
     parser.add_argument("--name", type=str, help="Override the name to use for the podcast")
+    parser.add_argument("--rss", type=str, help="Optional RSS feed URL for metadata")
     parser.add_argument("--match-titles", type=str, help="Only includes the episodes with titles matching the given string")
     args = parser.parse_args()
 
@@ -189,4 +190,4 @@ if __name__ == "__main__":
     elif args.check_config:
         check_config()
     else:
-        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only, args.refresh, args.name, args.match_titles)
+        main(args.input, args.censor_rss, args.report_only, args.search_term, args.download_only, args.refresh, args.name, args.match_titles, rss_url=args.rss)

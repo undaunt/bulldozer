@@ -4,9 +4,10 @@ requests
 mutagen
 titlecase
 python-dateutil
-pyyaml
+PyYAML
+feedparser
 pillow
 pillow-avif-plugin
-jinja2
+Jinja2
 beautifulsoup4
 tinydb
