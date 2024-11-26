@@ -1,4 +1,5 @@
 # file_analyzer.py
+
 import mutagen
 import re
 from collections import defaultdict
@@ -7,6 +8,9 @@ from email.utils import parsedate_to_datetime
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.mp3 import BitrateMode
+from mutagen.easyid3 import EasyID3
+from dateutil.parser import parse  # Import dateutil parser
+from mutagen.id3 import TXXX  # Import TXXX for accessing custom tags
 from .utils import spinner, log
 
 class FileAnalyzer:
@@ -61,7 +65,7 @@ class FileAnalyzer:
     def analyze_audio_file(self, file_path, trailer_patterns):
         """
         Analyze an individual audio file and extract metadata.
-        
+
         :param file_path: The path to the audio file.
         :return: The metadata of the audio file.
         """
@@ -77,13 +81,34 @@ class FileAnalyzer:
 
         metadata = {}
         if isinstance(audiofile, MP3):
-            tdrc = audiofile.get("TDRC")
-            if tdrc:
-                metadata['recording_date'] = tdrc.text[0]  # Extract the text value
-            else:
+            # Access 'TDRC' frame directly for recording date
+            try:
+                log(f"MP3 tags for '{file_path.name}': {audiofile.tags.pprint()}", "debug")
+                if ('TDRC' in audiofile.tags and
+                    audiofile.tags['TDRC'].text and
+                    audiofile.tags['TDRC'].text[0]):
+
+                    tdrc = audiofile.tags['TDRC']
+                    date_value = tdrc.text[0]
+                    # Convert date_value to string before stripping
+                    date_str = str(date_value).strip()
+
+                    if date_str:
+                        metadata['recording_date'] = date_str
+                        log(f"Found 'TDRC' tag: '{date_str}' in '{file_path.name}'", "debug")
+                    else:
+                        # Proceed to fallback methods
+                        metadata['recording_date'] = self.mp3_date_extract_alternatives(audiofile, file_path)
+                else:
+                    # Proceed to fallback methods
+                    metadata['recording_date'] = self.mp3_date_extract_alternatives(audiofile, file_path)
+            except Exception as e:
+                log(f"Error reading tags from '{file_path.name}': {e}", "error")
                 metadata['recording_date'] = None
+
             metadata['bitrate'] = round(audiofile.info.bitrate / 1000)
             metadata['bitrate_mode'] = "VBR" if audiofile.info.bitrate_mode == BitrateMode.VBR else "CBR"
+
         elif isinstance(audiofile, MP4):
             metadata['recording_date'] = audiofile.tags.get("\xa9day", [None])[0]
             metadata['bitrate'] = round(audiofile.info.bitrate / 1000)
@@ -91,11 +116,51 @@ class FileAnalyzer:
         else:
             log(f"Unsupported audio format, skipping: {file_path}", "warning")
             return None
-        
+
         if metadata['bitrate_mode'] != "VBR":
             self.all_vbr = False
 
         return metadata
+
+    def mp3_date_extract_alternatives(self, audiofile, file_path):
+        """
+        Extract the recording date from alternative tags.
+
+        :param audiofile: The audio file object.
+        :param file_path: The path to the audio file.
+        :return: The extracted date as a string, or None if not found.
+        """
+        try:
+            easy_tags = EasyID3(file_path)
+            log(f"EasyID3 tags for '{file_path.name}': {easy_tags.pprint()}", "debug")
+            # Try to get date from different tags
+            date = easy_tags.get('date', [None])[0]
+            if not date:
+                date = easy_tags.get('originaldate', [None])[0]
+            if not date:
+                date = easy_tags.get('year', [None])[0]
+            if date:
+                log(f"Found date in EasyID3 tags: '{date}' in '{file_path.name}'", "debug")
+                return date
+            else:
+                # Look for 'releasedate' in TXXX frames
+                txxx_tags = audiofile.tags.getall('TXXX')
+                releasedate = None
+                for tag in txxx_tags:
+                    log(f"TXXX tag: desc='{tag.desc}', text='{tag.text}'", "debug")
+                    if 'releasedate' in tag.desc.lower():
+                        releasedate = tag.text[0].strip()
+                        log(f"Found 'releasedate' in TXXX tags: '{releasedate}' in '{file_path.name}'", "debug")
+                        break
+                if releasedate:
+                    log(f"Set 'recording_date' to 'releasedate': '{releasedate}' for '{file_path.name}'", "debug")
+                    return releasedate
+                else:
+                    log(f"No date tag found in '{file_path.name}'", "warning")
+                    return None
+        except Exception as e:
+            log(f"Error reading EasyID3 tags from '{file_path.name}': {e}", "error")
+            return None
     
     def get_date_range(self):
         """
@@ -136,13 +201,17 @@ class FileAnalyzer:
                     if self.real_last_episode_date is None or (date_str and date_str > self.real_last_episode_date):
                         self.real_last_episode_date = date_str
 
-        def process_metadata(self, metadata, file_path):
-            """
-            Process the metadata of an audio file.
+    def process_metadata(self, metadata, file_path):
+        """
+        Process the metadata of an audio file.
 
-            :param metadata: The metadata of the audio file.
-            :param file_path: The path to the audio file.
-            """
+        :param metadata: The metadata of the audio file.
+        :param file_path: The path to the audio file.
+        """
+        recording_date = metadata.get('recording_date')
+        date_str = "Unknown"
+        year = None
+
         if recording_date:
             date_str_raw = str(recording_date)
             parsed = False
@@ -173,17 +242,17 @@ class FileAnalyzer:
             if not parsed:
                 try:
                     # Use dateutil.parser.parse for flexible parsing
-                    from dateutil.parser import parse
                     date_obj = parse(date_str_raw)
                     parsed = True
-                except (ImportError, ValueError):
-                    pass
+                except (ValueError) as e:
+                    log(f"Failed to parse date '{date_str_raw}' using dateutil: {e}", "warning")
 
             if not parsed:
                 try:
                     # Fallback to parsedate_to_datetime
                     date_obj = parsedate_to_datetime(date_str_raw)
-                    parsed = True
+                    if date_obj is not None:
+                        parsed = True
                 except (TypeError, ValueError, IndexError):
                     pass
 
@@ -204,7 +273,7 @@ class FileAnalyzer:
                     date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                     year = date_obj.year
                 except ValueError:
-                    log(f"Invalid date in file name for file {file_path}: '{date_str}'", "warning")
+                    log(f"Invalid date in file name for file '{file_path}': '{date_str}'", "warning")
                     date_str = "Unknown"
             else:
                 # Use file modification date as a last resort
